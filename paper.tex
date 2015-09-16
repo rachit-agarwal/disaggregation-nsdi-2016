@@ -1,0 +1,65 @@
+\documentclass[10pt, twocolumn]{article}
+
+\input{tex/packages}
+\input{tex/envirs}
+\input{tex/defs}
+\input{tex/margins}
+\frenchspacing
+\pagestyle{plain}
+
+\title{Network Support for Resource Disaggregation in Datacenters}
+
+\author{
+Peter X. Gao
+\\{UC Berkeley}
+\and
+Akshay Narayan
+\\{UC Berkeley}
+\and
+Sangjin Han
+\\{UC Berkeley}
+\and
+Rachit Agarwal
+\\{UC Berkeley}
+\and
+Sylvia Ratnasamy
+\\{UC Berkeley}
+\and
+Scott Shenker
+\\{UC Berkeley}
+}
+\date{}
+
+\begin{document}
+\maketitle
+
+%=====================================================================================
+% MAIN MATTER
+%=====================================================================================
+
+\begin{sloppypar}
+\input{tex/abstract}
+\input{tex/intro}
+\input{tex/summary}
+\input{tex/workloads}
+\input{tex/requirements}
+\input{tex/performance}
+\input{tex/discussion}
+%\input{tex/related}
+\input{tex/conclusion}
+\input{tex/methodology}
+\end{sloppypar}
+
+%=====================================================================================
+%=====================================================================================
+
+%\clearpage %for clearing the entire page
+{
+%\small
+%\raggedright
+%\balance
+\bibliographystyle{abbrv}
+\bibliography{bib/paper}
+}
+
+\end{document}

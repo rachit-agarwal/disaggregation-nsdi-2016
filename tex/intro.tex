@@ -1,0 +1,46 @@
+\section{Introduction}
+\label{sec:intro}
+
+\st{The computing infrastructure in existing datacenters is built around} \sr{Existing datacenters are based on a} server-centric architecture, where each server aggregates a small amount of the resources (CPU, memory, storage, interconnects) needed for computing tasks. While the server-centric architecture has been a tremendous success, recent industry trends suggest a paradigm shift --- a {\em disaggregated} architecture where the resources are decoupled. The Disaggregated Data Center (DDC), thus, comprises of a pool of resources, with each resource type built as a standalone resource blade and a datacenter-wide network interconnects all resource blades. Examples abound already --- Intel RSA, HP ``the machine'', Facebook's disaggregated rack, as well as research prototypes (Firebox, soNUMA).
+
+Resource disaggregation is beneficial along several dimensions. First, disaggregation makes computing hardware more modular, enabling the technology for each individual resource to evolve independently. Indeed, as new technologies evolve or need for specialized computing needs arise, physically decoupling the resources alleviates the burdensome process of integration, server factor form planning, and motherboard designs. Second, resource disaggregation also provides a fine-grained control over provisioning, sharing and efficiently utilizing individual resources. Finally, resource disaggregation allows overcoming the technology barriers (imbalance between memory and CPU capacity, power dissipation issues, etc), potentially enabling new technological advances. 
+
+
+\st{While the industry trends suggest a paradigm shift from the current server-centric architecture to a resource disaggregated architecture,} \sr{To date however,} there is no consensus on the granularity at which resource disaggregation will happen --- at the rack-scale, pod-scale, or an extreme of datacenter scale. 
+\sr{move above sentence elsewhere? not sure what the reader can take away from it at this point plus the following sentence is true on its own (i.e., independent of granularity), and having it prefaced by the above dilutes the point}
+Nevertheless, it stands without argument that key enabling or blocking factor to disaggregation will be the network. Indeed, the inter-resource communication that used to be contained to be within a server is now spread across the datacenter-wide fabric, increasing both the load and the performance constraints desired from the fabric.
+
+\sr{need citations inline here \ldots} 
+Unfortunately, the network support desired for resource disaggregation is, at best, poorly understood. The existing deployments of disaggregated datacenters are either small scale or proprietary, with little details available publicly. 
+
+
+This paper takes a step in building an understanding of the requirements and subsequent challenges to be resolved to enable network support for disaggregated datacenters. 
+\sr{Say that we take a workload-based approach to answer 
+three questions.\ldots}
+Specifically, we explore \st{the following} three \st{fundamental} questions: 
+
+\begin{itemize}[leftmargin=*]
+	\itemsep0em
+		\item What support with applications need from the network, in terms of latency and bandwidth, without any performance loss compared to server-centric architecture? \sr{be specific? i.e., with less than 10\% \ldots}
+	\item How will the network traffic change in DDC? What are the important design parameters that impact traffic patterns?
+    \item \st{Are} \sr{Can} existing \st{network} transport protocols \st{sufficient to} meet the above \st{application} requirements? \st{Are there any new aspects that networking research should focus on for DDC?} \sr{too vague}
+\end{itemize}
+We answer these questions in the context of a wide variety of applications --- batch processing, point queries, streaming, partition-aggregate --- through a combination of experiments and simulation~\cite{mongo, elastic}.
+
+\st{We provide a summary of our key findings in \S\ref{sec:summary}. We note, however, that our findings}
+\sr{Our key findings are:}
+
+
+\sr{Itemize the key results to match the above questions. And add one sentence on why finding matters (see my outline on the google doc)}
+are rather optimistic \sr{why are we optimistic?} --- to match \sr{not quite match, right?} the performance of applications running atop server-centric architectures, it suffices to have a full-bisection network fabric with $40$Gbps links that has a round trip time of $5\mu$s, and existing network protocols are able to meet the application demands. Hence, it is possible to get the qualitative benefits of disaggregated datacenter architecture with minimal requirements from the network \sr{too strong?}. While optimistic, our findings also show that there are ample opportunities to improve the application performance in disaggregated datacenter architecture.  Specifically, it is possible to meet the application performance even when DDC are expected to have dramatically different traffic patterns --- in terms of flow size distribution, flow inter-arrival times and traffic bustiness --- ones for which existing protocols are not optimized for. \sr{This doesn't mean there are opportunities to improve performance (as claimed in the previous sentence?). Last 2 sentences are a bit vague. Let's either state a concrete (i.e., quantified) result, or delete (I prefer delete).} 
+
+
+\sr{Add a list of caveats/disclaimers as follows\ldots}
+\begin{itemize} 
+\item our results are based on the workloads we study; not comprehensive
+\item we focus on net design, ignore many systems questions; may still well turn out that the latter matters more; in this sense one might view our study as seeing whether the network can `get out of the way’ \cite{};
+\item because our study is forward looking, many aspects of the overall context we’re considering don’t exist yet so we must make assumptions - e.g., data layout, how resources blades are organized, etc.  We make what we believe are sensible choices (and state these explicitly) but our results are dependent on these. More experience is needed to confirm these hold.
+\end{itemize} 
+
+
+
