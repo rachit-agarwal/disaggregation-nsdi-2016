@@ -35,49 +35,38 @@ In a disaggregated datacenter, it is possible to combine flows from multiple req
     \includegraphics[width = 2.25in]{img/graph1_sizedist_pdis}
 	\label{fig:sdds}
   }
-  \caption{\small{\rqc{Flow size distribution in \dis and \pdis. All the applications go into one figure: six lines in the CDF, one for each application. The same thing for \pdis.}}}
+  \caption{\small{\rqc{Flow size distribution in \dis (above) and \pdis (below). Note that the x-axis is log-scaled.}}}
   \label{fig:fsd}
 \end{figure}
 %
 
 \subsection{Flow-level Characterization} 
 \label{ssec:flc}
-We start by discussing the flow-level characteristics in \dis, including flow size distribution, flow count, distribution of traffic volume across flow sizes and flow arrival time distribution. We then discuss some of the implications of our results regarding flow-level characterization of \dis traffic.
+We start by discussing the flow-level characteristics in \dis, including flow size distribution, flow count and flow arrival time distribution. We then discuss some of the implications of our results regarding flow-level characterization of \dis traffic.
 
 \subsubsection{Flow Size Distribution}
-We start by discussing the flow size distribution in \dis. Figure~\ref{fig:fsd} shows the distribution of flow sizes across the six applications from Table~\ref{tab:workloads}. We make three interesting observations. First, the flow sizes are concentrated in the range [4KB, 2MB]. That is, in \dis, the flows are neither too short (a few tens of bytes), nor too long (hundreds of megabytes). Second, the flow size distribution is dominated by memory traffic (4KB flows) and irrespective of the underlying application, $70\%$ of the flows are less than $100$KB. Finally, the tail in flow size distribution is almost non-existent implying that irrespective of the application, there is no elephant-mice effect observed in \dis.
+We start by discussing the flow size distribution in \dis. Figure~\ref{fig:fsd} shows the distribution of flow sizes across the six applications from Table~\ref{tab:workloads}. We make three interesting observations. First, the flow sizes are concentrated in the relatively small range [4KB, 40MB]. Second, across all the applications we evaluated, the flow size distribution is dominated by memory traffic (4KB flows) and at least $60\%$ of the flows are less than $100$KB. Finally, the tail in flow size distribution is almost non-existent, implying that irrespective of the application the elephant-mice effect typically observed in \pdis is absent.
 
-Intuitively, the lack of short flows is because of \rc{$\gets$ I do not understand the reasons}. On the other hand, the lack of very long flows is because of the data placement technique outlined in \S\ref{ssec:method1}. Indeed, by enabling a more flexible placement of data, \dis allow a more uniform distribution of flows injected into the network.
+Intuitively, the lack of short flows is because of \rc{$\gets$ I do not understand the reasons: here is a reason:} all inter-node traffic is at page granularity, and pages are 4KB long. Long flows are absent as a consequence of the data placement technique outlined in \S\ref{ssec:method1}. Overall, by enabling a more flexible placement of data, \dis \rc{will allow? Which tense we use will affect how people perceive the paper?} allows a more uniform distribution of flows injected into the network.
 
-Figure~\ref{fig:fsd} also shows the flow size distribution with same applications running atop \pdis. We note that the workloads are significantly different in \pdis --- the flow sizes are concentrated in a much wider range (spanning an additional two orders of magnitude both of short and on long flow sizes) and the traffic is not dominated by any particular flow size. Note that our flow size distribution conforms with previous studies, including~\cite{imc-srikant, imc-theo}.
+Figure~\ref{fig:fsd} also shows the flow size distribution with the same applications running atop \pdis. We note that the distributions are significantly different in \pdis --- the flow sizes span an additional two orders of magnitude both of short and on long flow sizes and the traffic is not dominated by any one particular flow size. Note that our flow size distribution in \pdis conforms with previous studies~\cite{imc-srikant, imc-theo}.
 
 %
 \begin{figure}
   \centering
     \includegraphics[width = 2.5in]{img/graph2_numflows} 
-  \caption{\small{\rqc{Number of flows in \dis and \pdis. One single bar graph, two bars for each application --- one for \# flows in \dis and the other for \#flows in \pdis.}}}
+  \caption{\small{\rqc{Number of flows in \dis and \pdis. Note that the y-axis is log-scaled.}}}
   \label{fig:nof}
 \end{figure}
 %
 %
-\begin{figure}
-  \subfigure{
-    \includegraphics[width = 2.25in]{img/graph3_sizebins_dis} 
-	\label{fig:graph3a}
-  }
-%\hspace{0.05in}
-  \subfigure{
-    \includegraphics[width = 2.25in]{img/graph3_sizebins_pdis}
-	\label{fig:graph3b}
-  }
-  \caption{\small{\rqc{\#bytes in different bucket sizes for \dis and \pdis. One single stack-bar graph, two bars for each application, one stack for each bucket size --- one for \# flows in \dis and the other for \#flows in \pdis.}}}
-  \label{fig:vof}
-\end{figure}
-%
 \subsubsection{Flow count and volume}
-Figure~\ref{fig:nof} shows that the number of flows in \dis significantly increases (by almost $??\times$) when compared to \pdis. This is expected since a large number of flows that are contained within a server in \pdis (CPU to memory and/or local disk) are now injected into the network leading to significantly larger number of flows.
+\label{sssec:fctv}
+Figure~\ref{fig:nof} shows that the number of flows in \dis increases by several orders of magnitude over \pdis for most applications. This is expected since a large number of disk and memory access flows that are contained within a server in \pdis (over PCIe, etc) are now injected into the network.
 
-Figure~\ref{fig:vof} shows that the number of bytes in \dis is more uniformly distributed across short and long flows when compared to \pdis. There are two main reasons for this -- the memory flows dominating the network flows (thus having more bytes in short flows), and the long flows having been distributed across the network leading to reduction in \#bytes in long flows \rc{$\gets$ not sure about this}
+Interestingly, in memcached the number of flows in \ddc is fewer than in \pdis. After investigation, we found that while in \pdis each request will result in a network flow, in \dis some requests are serviced by the local memory cache without crossing the network. This phenomenon is discussed further in~\S\ref{sssec:tfvol}.
+
+%Figure~\ref{fig:vof} shows that the number of bytes in \dis is more uniformly distributed across short and long flows when compared to \pdis. There are two main reasons for this -- the memory flows dominating the network flows (thus having more bytes in short flows), and the long flows having been distributed across the network leading to reduction in \#bytes in long flows \rc{$\gets$ not sure about this}
 %
 \begin{figure}
   \centering
@@ -96,6 +85,7 @@ Figure~\ref{fig:vof} shows that the number of bytes in \dis is more uniformly di
 %
 \subsubsection{Flow Arrival Time Distribution}
 \label{ssec:fatd}
+\rc{This section along with figure 4 are slated for removal because we cannot count remote memory flows.}
 Next, we study the flow arrival times in \dis. Figure~\ref{fig:fat} shows the flow arrival time distribution for the six applications from Table~\ref{tab:workloads}. We make two interesting observations. First, the flow arrival time distribution is essentially independent of the application. This is because memory access traffic dominates all the applications, leading to similar flow arrival time distribution. Second, the flow arrival time distribution is significantly different from Poisson distribution, a commonly accepted approximation to workloads in \pdis. \rc{We should say something about inter-flow arrival times --- too small? not too small? any significant different compared to \pdis?}
 
 Figure~\ref{fig:fat} also shows the flow arrival time distribution in \pdis. As observed in several previous studies~\cite{imc-srikanth, imc-theo}, the distribution is very close to Poisson distribution providing a second order support to our evaluation methodology. In comparison to \pdis, the distribution is significantly different in \dis as discussed above.
@@ -103,11 +93,11 @@ Figure~\ref{fig:fat} also shows the flow arrival time distribution in \pdis. As 
 \subsubsection{Implications}
 \begin{itemize}[leftmargin=*]
 	\itemsep0em
-	\item Traffic dominated by short flows --- centralized solutions may be inefficient
-	\item More homogeneity in flow sizes --- design of protocols
+	\item Traffic dominated by latency-sensitive short flows --- centralized flow schedulers may be inefficient
 	\item Number of flows increased --- centralized solutions may see more scalability issues
-	\item Traffic volume more uniformly distributed across short and long flows --- ??
-	\item Flow arrival times too small --- centralized solutions inefficient
+	\item \rc{slated for removal} Flow arrival times too small --- centralized solutions inefficient
+	\item More homogeneity in flow sizes --- design of protocols
+	\item \rc{remove?} Traffic volume more uniformly distributed across short and long flows --- ??
 \end{itemize}
 
 \subsection{Network-level Characterization} 
@@ -118,12 +108,19 @@ We now study the network-level characteristics in \dis, including network traffi
 \begin{figure}
   \centering
     \includegraphics[width = 2.5in]{img/graph5_trafficvolume} 
-  \caption{\small{\rqc{Traffic volume in \dis and \pdis. One single bar graph, two bars for each application --- one for \# flows in \dis and the other for \#flows in \pdis.}}}
+  \caption{\small{\rqc{Traffic volume in \dis and \pdis.}}}
   \label{fig:vol}
 \end{figure}
 %
 \subsubsection{Traffic volume}
-We start with studying the traffic volume in \dis and \pdis (see Figure~\ref{fig:vol}). We note that the traffic volume in \dis is not much larger than in \pdis. At the first glance, this may seem rather surprising given the increase in traffic due to intra-server traffic becoming remote. However, note that memory accesses are just $4$KB in size; thus, a significantly large number of memory access traffic will correspond to a single long flow. Moreover, reads and writes that are local are only increased by a factor of $2\times$.
+\label{sssec:tfvol}
+We start with studying the traffic volume in \dis and \pdis (see Figure~\ref{fig:vol}). For most applications studied, the traffic volume in \dis increases due to the same reason the number of flows increases (shown in Figure~\ref{fig:nof}) --- flows that previously were contained within a server are now carried over the network.
+
+Wordcount demonstrates an especially drastic increase in traffic volume in \dis. \rc{The reason why wordcount has more flows}
+
+Just as memcached exhibits a greater number of flows in \pdis, its traffic volume is greater in \dis. Our experiments with 25\% of memory in the local cache, so we expect that approximately this amount of request traffic in memcached will be served from the local cache in \dis and avoid the network entirely. Accordingly, we observe that the difference in traffic volume between \dis and \pdis is 24\%. The difference in the number of flows is more drastic because the flow distributions are different --- while memcached in \pdis has a bimodal distribution of request and response flows of approximate size 30 bytes and 10KB respectively, in \dis the distribution varies in the range [4KB, 19MB]. The longer tail in flow sizes for \dis causes the drastic disparity in number of flows seen in Figure~\ref{fig:nof} despite a relatively modest increase in traffic volume.
+
+% We note that the traffic volume in \dis is not much larger than in \pdis. At the first glance, this may seem rather surprising given the increase in traffic due to intra-server traffic becoming remote. However, note that memory accesses are just $4$KB in size; thus, a significantly large number of memory access traffic will correspond to a single long flow. Moreover, reads and writes that are local are only increased by a factor of $2\times$.
 
 %
 \begin{figure}
@@ -137,15 +134,19 @@ We start with studying the traffic volume in \dis and \pdis (see Figure~\ref{fig
     \includegraphics[width = 2.3in]{img/graph6_trafficvolumeheatmap_dis_terasort}
 	\label{fig:sdds}
   }
-  \caption{\small{\rqc{Spatial traffic distribution in \dis and \pdis. A $n \times n$ matrix heat diagram, with cell $(i, j)$ having heat level corresponding to the traffic volume between source i and destination j. The same thing for \pdis.}}}
+  \caption{\small{\rqc{Spatial traffic distribution in \dis and \pdis. The x-axis represents senders and the y-axis receivers. In \pdis above, this is a $5 \times 5$ matrix for the 5 ec2 machines, while in \dis below, the heatmap is a $13 \times 13$ matrix, for the 5 cpu blades, 5 memory blades, and 3 disk blades we map the 5 ec2 machines to. For further details on this mapping see \S\ref{ssec:method1}. Blue means less traffic and red means more.}}}
+  
+  %A $n \times n$ matrix heat diagram, with cell $(i, j)$ having heat level corresponding to the traffic volume between source i and destination j. The same thing for \pdis.}}}
   \label{fig:sd}
 \end{figure}
 %
 \subsubsection{Spatial distribution}
-We now study the spatial distribution of traffic in \dis (see Figure~\ref{fig:sd}). We make two observations. First, when compared to \pdis, the traffic in \dis is significantly well distributed across the source-destination pairs. Indeed, the \dis architecture allows distributing a single read/write traffic across multiple nodes spatially distributed across the network. Second, the overall spatial distribution in \dis has significantly lower temperature than in \pdis, implying that on an average, each source-destination pair observes significantly lower traffic volume in \dis when compared to \pdis.
+We now study the spatial distribution of traffic in \dis (see Figure~\ref{fig:sd}). We make two observations. First, \rc{something}. Second, the overall spatial distribution in \dis has significantly lower temperature than in \pdis, implying that on an average, each source-destination pair observes significantly lower traffic volume in \dis when compared to \pdis.
+
+%First, when compared to \pdis, the traffic in \dis is significantly well distributed across the source-destination pairs. Indeed, the \dis architecture allows distributing a single read/write traffic across multiple nodes spatially distributed across the network. Second, the overall spatial distribution in \dis has significantly lower temperature than in \pdis, implying that on an average, each source-destination pair observes significantly lower traffic volume in \dis when compared to \pdis.
 
 \subsubsection{Temporal distribution}
-Finally, we study the temporal distribution of traffic in \dis and \pdis. Figure~\ref{fig:td} shows that, when compared to \pdis, the traffic distribution in \dis is significantly less bursty. This is because of an interesting effect caused by the data placement discussed in \S\ref{sec:summary}. Indeed, when a long flow in \pdis is divided across multiple smaller flows in \dis (due to data placement across multiple disks), a long flow is pipelined into multiple shorter flows. Akin to the task packing problem, where having multiple smaller tasks has a better packing compared to a single long task, dividing a single flow into multiple smaller flows ``packs'' into the network more efficiently making traffic less bursty.
+Finally, we study the temporal distribution of traffic in \dis and \pdis. Figure~\ref{fig:td} shows that, when compared to \pdis, the traffic distribution in \dis is significantly less bursty. This is because of an interesting effect caused by the data placement discussed in \S\ref{sec:summary}. When a long flow in \pdis is divided across multiple smaller flows in \dis (due to data placement across multiple disks), it is pipelined into multiple shorter flows. Akin to the task packing problem, where having multiple smaller tasks has a better packing compared to a single long task, dividing a single flow into multiple smaller flows ``packs'' into the network more efficiently, making traffic less bursty.
 %
 \begin{figure}
   \centering
@@ -158,7 +159,7 @@ Finally, we study the temporal distribution of traffic in \dis and \pdis. Figure
     \includegraphics[width = 2.3in]{img/graph7_temporaltraffic_dis_terasort}
 	\label{fig:sdds}
   }
-  \caption{\small{\rqc{Temporal traffic distribution in \dis and \pdis for one of the applications. Not sure if there is a good way to fit all the applications in one figure; but if not, we could put one of the results and refer to the appendix for the remaining applications.}}}
+  \caption{\small{\rqc{Temporal traffic distribution in \dis and \pdis for one of the applications. The trace was divided into 100ms timeslots, and flows were assigned to slots based on their start time. The traffic volume in these timeslots was then normalized to determine a value in bytes per second. Note the y-axis is log-scale.}}}
   \label{fig:td}
 \end{figure}
 %
@@ -169,8 +170,8 @@ Finally, we study the temporal distribution of traffic in \dis and \pdis. Figure
 \begin{itemize}[leftmargin=*]
 	\itemsep0em
 	\item Traffic volume --- do not need very high bandwidth networks
-	\item spatial distribution --- traffic not so local
-	\item temporal distribution --- do not need to design networks for peak traffic?
+	\item Spatial distribution --- traffic not so local
+	\item Temporal distribution --- do not need to design networks for peak traffic?
 \end{itemize}		
 
 \subsection{Impact of design knobs}

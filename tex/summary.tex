@@ -1,15 +1,26 @@
+\vspace{-0.1in}
 \section{Disaggregated Datacenters}
+\vspace{-0.05in}
 \label{sec:summary}
-As briefly outlined in \S\ref{sec:intro}, the scale at which resource disaggregation will happen is, at best, unclear. The goal of this paper is not to advocate any particular architecture for disaggregation datacenters. Nevertheless, we believe that some of the architectural aspects of disaggregated datacenters are inevitable for reasons of feasibility, performance and scalability. 
+In this section, we outline the assumptions made in our study regarding hardware (\S\ref{ssec:hardware}) and system (\S\ref{ssec:system}) architecture in \dis. \rqc{The high-level idea behind a disaggregated datacenter is illustrated in Figure~\ref{fig:ddcIllustration}.}
 
-We start this section by elaborating on our interpretation of a disaggregated datacenter, along with a discussion of some necessary architectural design decisions and the rationale behind these decisions (\S\ref{ssec:arch}). We then make some important assumptions regarding the usage model, implementation and execution of computing frameworks on this architecture (\S\ref{ssec:assumptions}) that allow us to explore the three questions outlined in \S\ref{sec:intro}. Finally, in \S\ref{ssec:summary}, we give a high-level overview of the experimental and simulation setup used in our study.
+\vspace{-0.1in}
+\subsection{Hardware in \dis}
+\vspace{-0.05in}
+\label{ssec:hardware}
+We make the same set of assumptions regarding hardware design in \dis as in previous studies~\cite{ddcHwDesign1, ddcHwDesign2, ddcHwDesign3}. These assumptions typically reflect the existing hardware prototypes to date, in industry~\cite{rsa, hptm, fdr} and in research~\cite{sonuma, firebox}. We refer the reader to \cite{ddcHwDesign1, ddcHwDesign2, ddcHwDesign3} for an in-depth discussion of hardware designs for disaggregated blades. The assumptions are as follows.
 
-\subsection{Resource Disaggregation}
-\label{ssec:arch}
-The high-level idea behind a disaggregated datacenter is illustrated in Figure~\ref{fig:disaggregated}. Each resource type --- CPU, memory, storage, network interfaces as well as specialized components (GPUs, various ASIC accelerators, etc.) --- is developed as a standalone hardware ``blade''. Depending on the scale of disaggregation, individual blades or a collection thereof form the edge of the network, with a direct interface to the network fabric. We discuss below the design and implementation of these individual blades, guided by the feasibility and limitation of the fabric that interconnects these blades. Table~\ref{tab:tech} shows the typical latency and bandwidth for the interconnects within a server-centric architecture. 
+\paragraphb{Each resource built as a standalone blade}
+Each resource type --- CPU, memory, storage, network interfaces as well as specialized components (GPUs, various ASIC accelerators, etc.) --- is developed as a standalone hardware ``blade''. Each resource blade has a network interface to the datacenter-wide network fabric.
 
-\paragraphb{CPU blades}
-Given the strict latency and bandwidth requirements of CPU-to-CPU and CPU-to-memory, it seems unlikely that the corresponding traffic can be handled over a network fabric. The CPU-to-CPU traffic can be avoided or at the least reduced by localizing computations within a single CPU blade; this may be reasonable for many applications given that latest CPUs already have $8$--$16$ cores. Alternatively, akin to servers today, a single CPU blade may house multiple CPU sockets to contain latency sensitive CPU-to-CPU traffic within the blade{\footnote{In this case, a smart scheduler could make scheduling decisions while taking such locality into account.}}. To reduce CPU-to-memory traffic, as proposed in previous work~\cite{mem1}, we assume that each CPU blade retains a small amount of local memory (rather than completely disaggregating the memory) that acts as a cache for remote memory. While remote memory may be allocated to any CPU in the datacenter, local memory is dedicated to its co-located CPUs. As we shall see, the assumption of local memory is necessary to ensure reasonable performance given the increased latency to access remote memory.
+\paragraphb{Cache coherence domain is limited to single CPU blade}
+The CPU-to-CPU traffic is not spread across the network fabric by localizing computations within a single CPU blade; this may be reasonable for many applications given that latest CPUs already have $8$--$16$ cores. Alternatively, akin to servers today, a single CPU blade may house multiple CPU sockets to contain CPU-to-CPU traffic within the blade{\footnote{In this case, a smart scheduler could make scheduling decisions while taking such locality into account.}}. The rationale is that the CPU-to-CPU traffic in server-centric architectures requires end-to-end latency and bandwidth that is unlikely to be offered by the network fabrics (see Table~\ref{tab:tech}).
+
+\paragraphb{Each CPU blade hosts a small local cache}
+As proposed in previous work~\cite{ddcHwDesign1}, we assume that each CPU blade retains a small amount of local memory (rather than completely disaggregating the memory) that acts as a cache for remote memory. While remote memory may be allocated to any CPU in the datacenter, local memory is dedicated to its co-located CPUs. \rqc{As we shall see, the assumption of local memory is necessary to ensure reasonable performance given the increased latency to access remote memory.}
+
+\paragraphb{Memory and I/O blades}
+We assume that each memory blade has a controller ASIC (or a lightweight processor) that implements address translation between the remote CPU's view of its address space and the addressing used internally within a blade{\footnote{\rc{We should comment on metadata management here}}}. Many I/O device controllers are beginning to support virtualization via the PCIe SR-IOV or MR-IOV features, which can be leveraged in \dis. 
 
 %
 \begin{table}
@@ -30,9 +41,68 @@ Given the strict latency and bandwidth requirements of CPU-to-CPU and CPU-to-mem
 \end{tabular}
 \end{table}
 %
+\vspace{-0.1in}
+\subsection{System architecture}
+\vspace{-0.05in}
+\label{ssec:system}
+We now outline the assumptions made in our study regarding the system architecture in \dis. Unlike the hardware-related assumptions, we have less to guide us on this front. We believe the following assumptions to be most reasonable:
+
+\paragraphb{VM as an abstraction}
+The resource allocation and scheduling model in server-centric architecture is centered around virtual machines (VMs). In \dis, we do not need to restrict the resource allocation and scheduling model to VM-oriented architecture. We discuss how disaggregation enables new usage models in \S\ref{sec:discussion}. However, the VM model can still be useful to leverage the existing software infrastructure as well as running existing applications with little or no modification. As it is unclear how the resource allocation and scheduling will evolve in \dis, we assume in this paper that resources are still utilized by aggregating them to form VMs, while each resource is now physically disaggregated across the datacenter.
+
+\paragraphb{Hardware organization}
+We assume that resource blades are organized along racks, as in today's datacenters. Each rack hosts a mix of different types of resource blades, rather than a single resource type (say, all disk blades or CPU blades). The rationale is that such an organization leads to a more uniform architecture, thus simplifying the network design \rc{$\gets$ I didn't quite understand this argument; and this one $\to$}. Moreover, the above assumption allows hardware organization to be independent of scope of disaggregation, requiring only the scheduler to be changed to support different scopes. \rqc{(in some proportion that isn't important)} \rc{Shouldn't this go to the previous subsection?}
+
+%The scheduler allocates resources by assigning resource blades (or a part of), configuring the resultant resource and address space assignments at the selected blades, and configuring the network that interconnects these blades. Depending of the scale of disaggregation, each rack may contain different types of resource blades and the scheduler may optimize for locality when it allocates resources to a job. The best layout of resource blades and the corresponding scheduler optimizations is a topic for future exploration.
+\paragraphb{Remote memory and disk access granularity}
+We assume that CPU blades access remote memory at the page granularity (4KB in x86) over the fabric. Typical memory access between CPU and DRAM in server-centric architecture occurs in the unit of cache-line size (64B in x86); however, we believe accessing memory at page granularity will be essential to better exploit spatial locality in common memory access patters and amortize the routing-trip latency more effectively. \rqc{In addition, page-level access requires little or no modification to the virtual memory subsystems of hypervisor or operating system, and it is completely transparent to user-level applications. We further assume that those remotely accessed pages are not shared by multiple VMs at a given time, in order to not introduce cache coherence traffic across the network.}
+
+\paragraphb{Distributed data placement}
+We assume that applications in \dis read and write large files at the granularity of ``blocks'', that are potentially distributed across multiple disk blades. This assumption is partially motivated by existing distributed file systems (\eg, HDFS) and enables both load balancing and simplified fault tolerance. % because this spreads load. We see no compelling reason to do otherwise (right?)
+
+\vspace{-0.1in}
+\subsection{Design knobs}
+\vspace{-0.05in}
+\label{ssec:knobs}
+The assumptions regarding hardware and software architecture in \dis leave us with two key system design choices that we treat as ``knobs'' in our study: {\em size of local cache on CPU blades} and {\em scale of disaggregation} (rack-, pod- or datacenter-scale). We explore how different possible configurations for these knobs impact the network requirements and traffic characteristics in \dis.
+
+\cut{
+\begin{itemize}[leftmargin=*]
+	\itemsep0em
+	\item {\bf Size of local cache:} how does the size of local cache on CPU blades affect the network requirements and traffic characteristics for \dis?
+	\item {\bf Scale of disaggregation:} whether disaggregation is performed at the rack-scale, pod-scale or the entire datacenter scale?
+	\item {\bf Data placement:} whether or not locality in data placement and access essential for \dis? \sr{This isn't a knob really since we're just picking one model?} \rc{$\gets$ Yes, unlikely that we will be able to evaluate multiple data placement strategies.}
+%	\item {\bf page size and access granularity:} \sr{ditto above?} ??
+\end{itemize} }
+
+%\sr{Perhaps simplify how this is presented (though specific text can be reused) with slightly massaged org as follows:
+%
+%\begin{itemize}
+%\item S2.2) System-level assumptions: Unlike hardware design, we have less to guide us on this front. Hence, we make the following which we believe are reasonable:
+%\begin{itemize}
+%\item VM as abstraction. Rationale: This seems like the natural starting point since it allows seamless transition for legacy apps. (copy from below and hotnets)
+%\item Hardware organization: we assume racks (as today) where each rack has a mix of different types of resource blades (in some proportion that isn't important). This is in contrast to (say) a rack full of only disk blades, another with mem blades, etc. Rationale: leads to a more uniform architecture, hence simplifies the network design. Also, means hardware organization is independent of scope of disaggr (i.e., only scheduler needs to change to support different scopes).
+%\item Distributed data placement: because this spreads load. We see no compelling reason to do otherwise (right?)
+%\item Page-level memory/storage access (copy rationale from HotNets paper
+%\end{itemize}
+%\end{itemize}
+%\begin{itemize}
+%\item (S2.3 (or part of 2.2)) This leaves us with two key system design choices that we treat as knobs: local cache size and the scale of disaggregation. We consider different possibilities for both in this paper.
+%\item On to next section (i.e., no methodology) \ldots 
+%\end{itemize}
+%
+%}
+
+
+\cut{\sr{not needed with new org above?} \st{As briefly outlined in \S\ref{sec:intro}, the scale at which resource disaggregation will happen is, at best, unclear. The goal of this paper is not to advocate any particular architecture for disaggregation datacenters. Nevertheless, we believe that some of the architectural aspects of disaggregated datacenters are inevitable for reasons of feasibility, performance and scalability. }
+
+\sr{I'd replace para below by just saying that: in this section we explain our assumptions w.r.t. hardware (S2.1), system architecture (S2.2) and our  design `knobs' (S2.3). } 
+\st{We start this section by elaborating on our interpretation of a disaggregated datacenter, along with a discussion of some necessary architectural design decisions and the rationale behind these decisions (\S\ref{ssec:arch}). We then make some important assumptions regarding the usage model, implementation and execution of computing frameworks on this architecture (\S\ref{ssec:assumptions}) that allow us to explore the three questions outlined in \S\ref{sec:intro}. Finally, in \S\ref{ssec:summary}, we give a high-level overview of the experimental and simulation setup used in our study.}}
+
 %
 \begin{figure*}
 	\centering
+	\label{fig:ddcIllustration}
 	\subfigure[Workload Characterization (\S\ref{sec:workloads})] {	
 	\begin{tikzpicture}[xscale=0.5, yscale=0.35]
 
@@ -339,28 +409,9 @@ Given the strict latency and bandwidth requirements of CPU-to-CPU and CPU-to-mem
 %	\end{minipage}
 \end{figure*}
 %
-\paragraphb{Memory and I/O blades}
-Besides the local cache on CPU blades, disaggregating memory and storage is rather straightforward and has been an active research topic~\cite{x1, x2, x3}. We assume that each memory blade has a controller ASIC (or a lightweight processor) that implements address translation between the remote CPU's view of its address space and the addressing used internally within a blade{\footnote{\rqc{We should comment on metadata management here}}}. Furthermore, many I/O device controllers are beginning to support virtualization via the PCIe SR-IOV or MR-IOV features, which can be also leveraged in the disaggregated datacenter. We refer the reader to \cite{x1, x2, x3} for an in-depth discussion of hardware designs for disaggregated blades.
 
-We assume that CPU blades access remote memory at the page granularity (4KB in x86) over the fabric. Typical memory access between CPU and DRAM in server-centric architecture occurs in the unit of cache-line size (64B in x86); however, we believe accessing memory at page granularity will be essential to better exploit spatial locality in common memory access patters and amortize the routing-trip latency more effectively. 
-%\rqc{In addition, page-level access requires little or no modification to the virtual memory subsystems of hypervisor or operating system, and it is completely transparent to user-level applications. We further assume that those remotely accessed pages are not shared by multiple VMs at a given time, in order to not introduce cache coherence traffic across the network.
-
-\paragraphb{Virtualization, resource allocation and scheduling}
-The resource allocation and scheduling model in server-centric architecture is centered around virtual machines (VMs). In disaggregated datacenters, we do not need to restrict the resource allocation and scheduling model to VM-oriented architecture. We discuss how disaggregation enables new usage models in \S\ref{sec:discussion}. However, the VM model can still be useful to leverage the existing software infrastructure as well as running existing applications with little or no modification. As it is unclear how the resource allocation and scheduling will evolve in a disaggregated datacenter, we assume in this paper that resources are still utilized by aggregating them to form VMs, while each resource is now physically disaggregated across the datacenter.
-
-The scheduler allocates resources by assigning resource blades (or a part of), configuring the resultant resource and address space assignments at the selected blades, and configuring the network that interconnects these blades. Depending of the scale of disaggregation, each rack may contain different types of resource blades and the scheduler may optimize for locality when it allocates resources to a job. The best layout of resource blades and the corresponding scheduler optimizations is a topic for future exploration.
-
-\subsection{Design Knobs}
-\label{ssec:assumptions}
-The high-level architecture for disaggregated datacenters above leaves a number of design related questions open-ended, making only a set of essential assumptions based on feasibility and limitation of network fabric interconnecting the resource blades. Several of these design choices will have significant impact on the network fabric, the focus of this paper. We consider these choices as possible ``knobs'' in our study. We outline these knobs below, and analyze how these different knobs will impact the design and evolution of network fabric for disaggregated datacenters.
-
-\begin{itemize}[leftmargin=*]
-	\itemsep0em
-	\item {\bf Local cache size:} how does the size of local cache affect the network fabric? Does increasing the cache size have a diminishing impact on network fabric?
-	\item {\bf Scale of disaggregation:} whether disaggregation is performed at the rack-scale, pod-scale or the entire datacenter scale?
-	\item {\bf Data placement:} whether or not locality in data placement and access essential for \dis?
-	\item {\bf page size and access granularity:} ??
-\end{itemize} 
+%\paragraphb{Virtualization, resource allocation and scheduling}
+%The scheduler allocates resources by assigning resource blades (or a part of), configuring the resultant resource and address space assignments at the selected blades, and configuring the network that interconnects these blades. Depending of the scale of disaggregation, each rack may contain different types of resource blades and the scheduler may optimize for locality when it allocates resources to a job. The best layout of resource blades and the corresponding scheduler optimizations is a topic for future exploration.
 
 % \paragraphb{VM as a computational unit}
 % The current datacenter usage model is heavily based on the server-centric architecture. While physical servers in datacenters have evolved to server virtualization~\cite{cc} or other comparable technologies, they are still all centered around the concept of server, which aggregates slices to hardware resources within a server.
@@ -376,8 +427,11 @@ The high-level architecture for disaggregated datacenters above leaves a number 
 % \paragraphb{Block-level remote storage access}
 % We assume that CPU blades access remote storage at the block granularity (4KB in x86) over the fabric. This is the storage access granularity between CPU and current storage devices (disk, SSD, etc) in traditional servers.
 
+\cut{
 \subsection{Methodology Overview}
-Figure~\ref{fig:system} gives a high-level overview of our methodology to explore the three questions outlined in \S\ref{sec:intro}. We provide details for each of the three steps in respective sections, but note that the requirements from the network fabric are heavily dependent on the underlying application. To that end, we explore a wide variety of applications varying from batch processing (long running background jobs), point queries (user facing short jobs) and stream processing (real-time data analytics), as outlined in Table~\ref{tab:workloads}. 
+\sr{skip this section and insert methodology inline with each section as relevant? It's too hard to follow (or weigh) at this point.}
+
+Figure~\ref{fig:system} gives a high-level overview of our methodology to explore the three questions outlined in \S\ref{sec:intro}. We provide details for each of the three steps in respective sections, but note that the requirements from the network fabric are heavily dependent on the underlying application. To that end, we explore a wide variety of applications varying from batch processing (long running background jobs), point queries (user facing short jobs) and stream processing (real-time data analytics), as outlined in Table~\ref{tab:workloads}. }
 %Each of these applications typically have very different data read/write patterns, which will translate to very different traffic patterns in disaggregated datacenters. In fact, within these application types, each particular system and/or algorithm may have different patterns. To that end, we use all six different workloads across these three applications in our evaluation. These workloads are described in Table~\ref{tab:workloads}.
 
 \begin{table*}
@@ -389,9 +443,10 @@ Figure~\ref{fig:system} gives a high-level overview of our methodology to explor
 	  \hline
 		\textbf{Application} & \textbf{Application} & \textbf{System} & \textbf{Abbreviation}\\
 		\textbf{domain} & \textbf{} & \textbf{} & \textbf{}\\\hline \hline
-    Batch & WordCount & Spark and Hadoop & BC\\\hline
-    Batch & TeraSort & Spark and Hadoop & BT\\\hline
-    Batch & GraphEngine & GraphLab & BG\\\hline
+    Batch & WordCount & Hadoop & BC1\\\hline
+    Batch & WordCount & Spark & BC2\\\hline
+    Batch & TeraSort & Hadoop & BT\\\hline
+    Batch & Collaborative Filtering & GraphLab & BG\\\hline
     Point Queries & Key-value store & Memcached & PKV\\\hline
     Point Queries & Search & ElasticSearch & PS\\\hline
     Stream Processing & Wordcount & Storm & S\\\hline
