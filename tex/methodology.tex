@@ -111,7 +111,7 @@ A trace comprises of 5 types of files:
     \begin{enumerate}
     \item one file per ec2 machine.
     \item format: \texttt{<record id> <utc timestamp, us> <page location> <length, pages> <batch seq no>}
-    \item Each line processed independently.
+    \item entries are combined by ``batch'' - batches of memory requests that arrive at SIT.
     \item time is converted to seconds by dividing by 1e6.
     \item if access is a read, timestamp is negative. if access is a write, timestamp is positive (read/write bit is stored, then ts = abs(ts))
     \item <page location> represents the page's address in the swap device
@@ -156,7 +156,6 @@ To fix this, we use the following heuristic:
 
 \subsubsection{Combining Parsed Flows}
 \begin{enumerate}
-\item only disk flows are combined.
 \item Time adjustment: the smallest time $t_{start}$ across all flows for all nodes is found. For each flow f, $f_{start} -= t_{start}$
 \item Address Mapping
     \begin{enumerate}
@@ -199,5 +198,6 @@ Two versions: ``verbatim'' and ``scale-up''
     \item Pick 12 other nodes randomly from the 144 node topology
     \item for each of those 12, assign a receiver profile from the corresponding sender column of the traffic matrix.
     \item traffic from that sender to that receiver will now be drawn from the appropriate size, interarrival CDFs.
+    \item repeat the above 4 steps 3 times (to make sure the network has not shrunk due to disaggregation)
     \end{enumerate}
 \end{enumerate}
