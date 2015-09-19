@@ -180,6 +180,22 @@ We now study how various design parameters in \dis architecture design impact th
 
 \paragraphb{Impact of cache size}
 
+To determine the impact of a varying local cache size, we evaluated local cache sizes from 10\% to 90\% of the virtual memory space size of $29.45$GB. Figure~\ref{fig:rmem} show how the number of flows (Figure~\ref{fig:rmem_numflows}) and traffic volume (Figure~\ref{fig:rmem_trafvol}) vary.
+
+\begin{figure}
+\centering
+\subfigure{
+\includegraphics[width = 3.0in]{img/rmem_numflows}
+\label{fig:rmem_numflows}
+}
+\subfigure{
+\includegraphics[width = 3.0in]{img/rmem_trafficvolume}
+\label{fig:rmem_trafvol}
+}
+\caption{Flow count (above) and traffic volume (below) with varying fraction of memory in the local cache.}
+\label{fig:rmem}
+\end{figure}
+
 \paragraphb{Impact of disaggregation scale}
 
 \paragraphb{Impact of data placement}
