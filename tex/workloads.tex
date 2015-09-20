@@ -4,22 +4,31 @@ In this section, we explore the first question: characterizing the network traff
 
 \subsection{Methodology}
 \label{ssec:method1} 
-To characterize the traffic in disaggregated datacenters, we set up a testbed comprising of $5$ Amazon EC2 \texttt{m3.2xlarge} machines running Amazon Linux, each having $16$ vCPU, $32$GB of main memory, $1$TB of magnetic disk drives and $1$Gbps links. The Amazon EC2 machines we used were Private network enabled, ensuring no interference with other machines in the cluster. For each of the applications in Table~\ref{tab:workloads}, we capture local and remote data access flows, both for memory and disk.
+To characterize the traffic in disaggregated datacenters, we set up a testbed comprising of $5$ Amazon EC2 \texttt{m3.2xlarge} machines running Amazon Linux, each with $16$ vCPU, $32$GB of main memory, $1$TB of magnetic disk drives and $1$Gbps links. The Amazon EC2 machines we used were Private network enabled, ensuring no interference with other machines in the cluster. For each of the applications in Table~\ref{tab:workloads}, we capture local and remote data access flows, both for memory and disk.
 
 \paragraphb{Inter-machine communication in \pdis}
 To compare the traffic in \dis against the traditional server-centric architecture, we first characterize the flows in existing datacenters. To achieve this, we run the applications atop the above cluster. We then use {\tt TCPdump}~\cite{tcpdump}, which gives us a packet-level log of inter-machine communication. The packet-level log is combined into a flow level log by combining on the five-tuple; this approach has the limitation that the source port id a given application uses for various connections will be distinct. This is largely true except in the case of memcached, which maintains a unique port number for each client-server pair --- in this special case we limit flow sizes to the known request size of 10KB.
 
 \paragraphb{Local and remote memory accesses in \dis}
-To capture remote memory accesses, we first logically partition the main memory into ``local cache'' and ``remote memory''; for reasons described later, we use $30\%$ of the main memory as local cache. We then use an in-house implementation of a light-weight special instrumentation tool (SIT), implemented as a shim layer between the CPU and the swap device. The SIT intercepts all memory access requests into the part of main memory identified as remote, which is represented in our experiments as a swap device. Since memory reads are assumed to be at the page granularity, all such captured requests have the same size (4KB). Memory requests arrive at SIT in batches; these batches are represented as individual flows. \rqc{SIT also captures the request time for each request, and ...} 
+To capture remote memory accesses, we first logically partition the main memory into ``local cache'' and ``remote memory''; for reasons described later, we use $30\%$ of the main memory as local cache. We then use an in-house implementation of a light-weight special instrumentation tool (SIT), implemented as a shim layer between the CPU and the swap device. The SIT intercepts all page faults, or memory access requests into the part of main memory identified as remote, and records the time and address accessed. Consequently, all captured requests are at page granularity and ergo have the same size (4KB). Memory requests arrive at SIT in batches; these batches are grouped into flows for \dis.
 
 \paragraphb{Disk accesses in \dis}
 We capture disk accesses during application runtime using the {\tt blktrace} utility, which provides disk access traces at the granularity of disk block sizes. Note that the data residing on a single disk is not necessarily on consecutive disk blocks (due to disk fragmentation); thus, a single file access from the disk may result in accessing non-consecutive disk blocks. Since {\tt blktrace} provides disk access patterns at the disk block granularity, it is impossible to infer which disk block accesses correspond to a single disk access request at the application layer. We, thus, use a simple heuristic to combine multiple disk block access into a single application layer request --- all those disk block accesses that occur within a small $\delta$ time range are combined into a single disk access. We study the sensitivity of our results against $\delta$ during traffic characterization. 
 
-\rc{$\gets$ this is incorrect; we have to describe the mapping of disk addresses to disaggregated disk blades:} It is important to note the mapping of \pdis flows to \dis flows. \pdis flows represent remote reads (\ie shuffle traffic); these reads are captured as \emph{local} reads in \dis on the machine where the data was located. Therefore, to accurately represent traffic in \dis we must attribute some fraction of reads to a given disk to a CPU blade other than the one the disk read was recorded on. To do so we match disk flows with nic traffic by time. If a disk flow is matched to a nic flow, it is assumed to be part of a remote read and it is attributed to the source of the nic flow. Otherwise, the disk flow is assumed to be a local disk read and its source attribtion is unchanged.
+\rc{$\gets$ this is incorrect; we have to describe the mapping of disk addresses to disaggregated disk blades:} It is important to note the mapping of \pdis flows to \dis flows. \pdis flows represent remote reads (\ie shuffle traffic); these reads are captured as \emph{local} reads in \dis on the machine where the data was located. Therefore, to accurately represent traffic in \dis we must attribute some fraction of reads to a given disk to a CPU blade other than the one the disk read was recorded on. To do so we match disk flows with NIC traffic by time. If a disk flow is matched to a NIC flow, it is assumed to be part of a remote read and it is attributed to the source of the NIC flow. Otherwise, the disk flow is assumed to be a local disk read and its source attribution is unchanged.
 
 \paragraphb{Data placement in \dis}
 \rqc{We should describe how we map the disks in \pdis to those in \dis, and say that this mapping is simply a design knob.}
-All memory and disk accesses in \dis are associated with a specific address in the respective global virtual memory space. This memory space is partitioned into nodes using a simple range hashing algorithm. Using a range hashing algorithm allows for sequential address accesses to be pipelined for higher throughput. We leave a more thorough exploration of this particular design knob to future work.
+All memory and disk accesses in \dis are associated with a specific address in the respective global virtual memory space. This address space is partitioned into nodes using a simple range hashing algorithm. There are five memory nodes and three disk nodes for a 5-machine ec2 cluster --- this represents the fact that disk access is slower than memory access, and thus can support more resource per blade without becoming bandwidth constrained.
+
+Our range hashing works as follows: 
+\begin{enumerate}
+\item the address space for each node is split evenly into (number of nodes) contiguous ranges --- memory space split into 5 and disk space split into 3
+\item each range is mapped to one disaggregated node
+\item this is done for all five ec2 machines
+\item Using a range hashing algorithm allows for sequential address accesses to be pipelined for higher throughput. 
+\item We leave a more thorough exploration of this particular design knob to future work.
+\end{enumerate}
 
 \paragraphb{Transforming data accesses into network flows}
 In a disaggregated datacenter, it is possible to combine flows representing multiple requests between the same source and destination into a single flow. We use a threshold of 50 us between requests; that is, all traffic between two hosts is combined into a single flow as long as there is no intervening 50 us quiescent period. 
@@ -108,7 +117,7 @@ Figure~\ref{fig:fat} also shows the flow arrival time distribution in \pdis. As 
 	\item Number of flows increased --- centralized solutions may see more scalability issues
 	\item \rc{slated for removal} Flow arrival times too small --- centralized solutions inefficient
 	\item More homogeneity in flow sizes --- design of protocols
-	\item \rc{remove?} Traffic volume more uniformly distributed across short and long flows --- ??
+	\item Traffic volume more uniformly distributed across short and long flows --- design of protocols
 \end{itemize}
 
 \subsection{Network-level Characterization} 
@@ -132,9 +141,8 @@ Wordcount demonstrates an especially drastic increase in traffic volume in \dis.
 Just as memcached exhibits a greater number of flows in \pdis, its traffic volume is greater in \dis. Our experiments with 25\% of memory in the local cache, so we expect that approximately this amount of request traffic in memcached will be served from the local cache in \dis and avoid the network entirely. Accordingly, we observe that the difference in traffic volume between \dis and \pdis is 24\%. The difference in the number of flows is more drastic because the flow distributions are different --- while memcached in \pdis has a bimodal distribution of request and response flows of approximate size 30 bytes and 10KB respectively, in \dis the distribution varies in the range [4KB, 19MB]. The longer tail in flow sizes for \dis causes the drastic disparity in number of flows seen in Figure~\ref{fig:nof} despite a relatively modest increase in traffic volume.
 
 % We note that the traffic volume in \dis is not much larger than in \pdis. At the first glance, this may seem rather surprising given the increase in traffic due to intra-server traffic becoming remote. However, note that memory accesses are just $4$KB in size; thus, a significantly large number of memory access traffic will correspond to a single long flow. Moreover, reads and writes that are local are only increased by a factor of $2\times$.
-
 %
-\begin{figure}
+\begin{figure}[t]
   \centering
   \subfigure{
     \includegraphics[width = 2.3in]{img/graph6_trafficvolumeheatmap_pdis_terasort} 
@@ -145,7 +153,7 @@ Just as memcached exhibits a greater number of flows in \pdis, its traffic volum
     \includegraphics[width = 2.3in]{img/graph6_trafficvolumeheatmap_dis_terasort}
 	\label{fig:sdds}
   }
-  \caption{\small{\rqc{Spatial traffic distribution in \pdis and \dis for the terasort application. The x-axis represents senders and the y-axis receivers. In \pdis above, this is a $5 \times 5$ matrix for the 5 ec2 machines, while in \dis below, the heatmap is a $13 \times 13$ matrix, for the 5 cpu blades, 5 memory blades, and 3 disk blades we map the 5 ec2 machines to. For further details on this mapping see \S\ref{ssec:method1}.}}}
+  \caption{\small{Spatial traffic distribution in \pdis and \dis for the terasort application. The x-axis represents senders and the y-axis receivers. In \pdis above, this is a $5 \times 5$ matrix for the 5 ec2 machines, while in \dis below, the heatmap is a $13 \times 13$ matrix, for the 5 cpu blades, 5 memory blades, and 3 disk blades we map the 5 ec2 machines to. For further details on this mapping see \S\ref{ssec:method1}.}}
   
   %A $n \times n$ matrix heat diagram, with cell $(i, j)$ having heat level corresponding to the traffic volume between source i and destination j. The same thing for \pdis.}}}
   \label{fig:sd}
@@ -154,16 +162,14 @@ Just as memcached exhibits a greater number of flows in \pdis, its traffic volum
 \subsubsection{Spatial distribution}
 We now study the spatial distribution of traffic in \dis (see Figure~\ref{fig:sd}). We make two observations. First, \rc{something}. Second, the overall spatial distribution in \dis has significantly lower temperature than in \pdis, implying that on an average, each source-destination pair observes significantly lower traffic volume in \dis when compared to \pdis.
 
-All traffic represented in Figure~\ref{fig:sdds} has a CPU as either its source or destination as an artifact of our measurement strategy of capturing disk and memory accesses from the CPU. This is a consequence of our assumption as discussed in \S~\ref{sec:summary} that CPUs do not share memory or disk resources.
-
-Traffic between memory and disk nodes is absent due to our model of \dis; one could however imagine a model in which this is no longer true. For example, disk accesses could be sent to the CPU that requested them while simultaneously being cached in remote memory. We leave an exploration of this design space to future work.
+All traffic represented in Figure~\ref{fig:sdds} has a CPU as either its source or destination. This is a consequence of our assumption as discussed in \S~\ref{sec:summary} that CPUs do not share memory or disk resources. One could however imagine alternate models in which not all traffic is CPU-based. For example, disk accesses could be sent to the CPU that requested them while simultaneously being cached in remote memory. We leave an exploration of this design space to future work.
 
 %First, when compared to \pdis, the traffic in \dis is significantly well distributed across the source-destination pairs. Indeed, the \dis architecture allows distributing a single read/write traffic across multiple nodes spatially distributed across the network. Second, the overall spatial distribution in \dis has significantly lower temperature than in \pdis, implying that on an average, each source-destination pair observes significantly lower traffic volume in \dis when compared to \pdis.
 
 \subsubsection{Temporal distribution}
 Finally, we study the temporal distribution of traffic in \dis and \pdis. Figure~\ref{fig:td} shows that, when compared to \pdis, the traffic distribution in \dis is significantly less bursty. This is because of an interesting effect caused by the data placement discussed in \S\ref{sec:summary}. When a long flow in \pdis is divided across multiple smaller flows in \dis (due to data placement across multiple disks), it is pipelined into multiple shorter flows. Akin to the task packing problem, where having multiple smaller tasks has a better packing compared to a single long task, dividing a single flow into multiple smaller flows ``packs'' into the network more efficiently, making traffic less bursty.
 %
-\begin{figure}
+\begin{figure}[t]
   \centering
   \subfigure{
     \includegraphics[width = 2.3in]{img/graph7_temporaltraffic_pdis_terasort} 
@@ -174,7 +180,7 @@ Finally, we study the temporal distribution of traffic in \dis and \pdis. Figure
     \includegraphics[width = 2.3in]{img/graph7_temporaltraffic_dis_terasort}
 	\label{fig:sdds}
   }
-  \caption{\small{\rqc{Temporal traffic distribution in \dis and \pdis for one of the applications. The trace was divided into 100ms timeslots, and flows were assigned to slots based on their start time. The traffic volume in these timeslots was then normalized to determine a value in bytes per second. Note the y-axis is log-scale.}}}
+  \caption{\small{Temporal traffic distribution in \dis and \pdis for one of the applications. The trace was divided into 100ms timeslots, and flows were assigned to slots based on their start time. The traffic volume in these timeslots was then normalized to determine a value in bytes per second. Note the y-axis is log-scale.}}
   \label{fig:td}
 \end{figure}
 %
@@ -197,7 +203,9 @@ We now study how various design parameters in \dis architecture design impact th
 
 To determine the impact of a varying local cache size, we evaluated local cache sizes from 10\% to 90\% of the virtual memory space size of $29.45$GB using the terasort application described above. Figure~\ref{fig:rmem} show how the number of flows (Figure~\ref{fig:rmem_numflows}) and traffic volume (Figure~\ref{fig:rmem_trafvol}) vary. 
 
-\begin{figure}
+As expected, as the percentage of memory that is remote increases, a greater number of accesses go through the network. 
+
+\begin{figure}[t]
 \centering
 \subfigure{
 \includegraphics[width = 3.0in]{img/rmem_numflows}
@@ -211,8 +219,11 @@ To determine the impact of a varying local cache size, we evaluated local cache 
 \label{fig:rmem}
 \end{figure}
 
+\paragraphb{Impact of remote versus local} 
+\rqc{Peter's graphs showing performance of local disk vs remote memory}
+
 \paragraphb{Impact of disaggregation scale}
 
 \paragraphb{Impact of data placement}
 
-\paragraphb{Impact of remote versus local}
+\rc{what do these mean?}
