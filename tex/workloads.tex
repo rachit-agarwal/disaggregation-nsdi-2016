@@ -84,7 +84,7 @@ Figure~\ref{fig:fsd} also shows the flow size distribution with the same applica
 \label{sssec:fctv}
 Figure~\ref{fig:nof} shows that the number of flows in \dis increases by several orders of magnitude over \pdis for most applications. This is expected since a large number of disk and memory access flows that are contained within a server in \pdis (over PCIe, etc) are now injected into the network.
 
-Interestingly, in memcached the number of flows in \ddc is fewer than in \pdis. After investigation, we found that while in \pdis each request will result in a network flow, in \dis some requests are serviced by the local memory cache without crossing the network. This phenomenon is discussed further in~\S\ref{sssec:tfvol}.
+Interestingly, in memcached the number of flows in \dis is fewer than in \pdis. After investigation, we found that while in \pdis each request will result in a network flow, in \dis some requests are serviced by the local memory cache without crossing the network. This phenomenon is discussed further in~\S\ref{sssec:tfvol}.
 
 %Figure~\ref{fig:vof} shows that the number of bytes in \dis is more uniformly distributed across short and long flows when compared to \pdis. There are two main reasons for this -- the memory flows dominating the network flows (thus having more bytes in short flows), and the long flows having been distributed across the network leading to reduction in \#bytes in long flows \rc{$\gets$ not sure about this}
 %
@@ -145,12 +145,12 @@ Just as memcached exhibits a greater number of flows in \pdis, its traffic volum
 \begin{figure}[t]
   \centering
   \subfigure{
-    \includegraphics[width = 2.3in]{img/graph6_trafficvolumeheatmap_pdis_terasort} 
+    \includegraphics[width = 2.3in]{img/graph6_trafficvolumeheatmap_dis_terasort} 
 	\label{fig:asdd}
   }
 %\hspace{0.05in}
   \subfigure{
-    \includegraphics[width = 2.3in]{img/graph6_trafficvolumeheatmap_dis_terasort}
+    \includegraphics[width = 2.3in]{img/graph6_trafficvolumeheatmap_pdis_terasort}
 	\label{fig:sdds}
   }
   \caption{\small{Spatial traffic distribution in \pdis and \dis for the terasort application. The x-axis represents senders and the y-axis receivers. In \pdis above, this is a $5 \times 5$ matrix for the 5 ec2 machines, while in \dis below, the heatmap is a $13 \times 13$ matrix, for the 5 cpu blades, 5 memory blades, and 3 disk blades we map the 5 ec2 machines to. For further details on this mapping see \S\ref{ssec:method1}.}}
@@ -172,12 +172,12 @@ Finally, we study the temporal distribution of traffic in \dis and \pdis. Figure
 \begin{figure}[t]
   \centering
   \subfigure{
-    \includegraphics[width = 2.3in]{img/graph7_temporaltraffic_pdis_terasort} 
+    \includegraphics[width = 2.3in]{img/graph7_temporaltraffic_dis_terasort} 
 	\label{fig:asdd}
   }
 %\hspace{0.05in}
   \subfigure{
-    \includegraphics[width = 2.3in]{img/graph7_temporaltraffic_dis_terasort}
+    \includegraphics[width = 2.3in]{img/graph7_temporaltraffic_pdis_terasort}
 	\label{fig:sdds}
   }
   \caption{\small{Temporal traffic distribution in \dis and \pdis for one of the applications. The trace was divided into 100ms timeslots, and flows were assigned to slots based on their start time. The traffic volume in these timeslots was then normalized to determine a value in bytes per second. Note the y-axis is log-scale.}}
@@ -201,23 +201,21 @@ We now study how various design parameters in \dis architecture design impact th
 
 \paragraphb{Impact of cache size}
 
-To determine the impact of a varying local cache size, we evaluated local cache sizes from 10\% to 90\% of the virtual memory space size of $29.45$GB using the terasort application described above. Figure~\ref{fig:rmem} show how the number of flows (Figure~\ref{fig:rmem_numflows}) and traffic volume (Figure~\ref{fig:rmem_trafvol}) vary. 
 
-As expected, as the percentage of memory that is remote increases, a greater number of accesses go through the network. 
 
-\begin{figure}[t]
-\centering
-\subfigure{
-\includegraphics[width = 3.0in]{img/rmem_numflows}
-\label{fig:rmem_numflows}
-}
-\subfigure{
-\includegraphics[width = 3.0in]{img/rmem_trafficvolume}
-\label{fig:rmem_trafvol}
-}
-\caption{Flow count (above) and traffic volume (below) with varying fraction of memory in the local cache.}
-\label{fig:rmem}
-\end{figure}
+%\begin{figure}[t]
+%\centering
+%\subfigure{
+%\includegraphics[width = 3.0in]{img/rmem_numflows}
+%\label{fig:rmem_numflows}
+%}
+%\subfigure{
+%\includegraphics[width = 3.0in]{img/rmem_trafficvolume}
+%\label{fig:rmem_trafvol}
+%}
+%\caption{Flow count (above) and traffic volume (below) with varying fraction of memory in the local cache.}
+%\label{fig:rmem}
+%\end{figure}
 
 \paragraphb{Impact of remote versus local} 
 \rqc{Peter's graphs showing performance of local disk vs remote memory}
