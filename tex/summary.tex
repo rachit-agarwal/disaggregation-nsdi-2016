@@ -66,14 +66,19 @@ We assume that applications in \dis read and write large files at the granularit
 \label{ssec:knobs}
 The assumptions regarding hardware and software architecture in \dis leave us with two key system design choices that we treat as ``knobs'' in our study: {\em size of local cache on CPU blades} and {\em scale of disaggregation} (rack-, pod- or datacenter-scale). We explore how different possible configurations for these knobs impact the network requirements and traffic characteristics in \dis.
 
-\cut{
-\begin{itemize}[leftmargin=*]
-	\itemsep0em
-	\item {\bf Size of local cache:} how does the size of local cache on CPU blades affect the network requirements and traffic characteristics for \dis?
-	\item {\bf Scale of disaggregation:} whether disaggregation is performed at the rack-scale, pod-scale or the entire datacenter scale?
-	\item {\bf Data placement:} whether or not locality in data placement and access essential for \dis? \sr{This isn't a knob really since we're just picking one model?} \rc{$\gets$ Yes, unlikely that we will be able to evaluate multiple data placement strategies.}
-%	\item {\bf page size and access granularity:} \sr{ditto above?} ??
-\end{itemize} }
+%--------------------------------------------------
+% END OF USEFUL STUFF
+%-----------------------------
+
+
+% \cut{
+% \begin{itemize}[leftmargin=*]
+% 	\itemsep0em
+% 	\item {\bf Size of local cache:} how does the size of local cache on CPU blades affect the network requirements and traffic characteristics for \dis?
+% 	\item {\bf Scale of disaggregation:} whether disaggregation is performed at the rack-scale, pod-scale or the entire datacenter scale?
+% 	\item {\bf Data placement:} whether or not locality in data placement and access essential for \dis? \sr{This isn't a knob really since we're just picking one model?} \rc{$\gets$ Yes, unlikely that we will be able to evaluate multiple data placement strategies.}
+% %	\item {\bf page size and access granularity:} \sr{ditto above?} ??
+% \end{itemize} }
 
 %\sr{Perhaps simplify how this is presented (though specific text can be reused) with slightly massaged org as follows:
 %
@@ -94,320 +99,269 @@ The assumptions regarding hardware and software architecture in \dis leave us wi
 %}
 
 
-\cut{\sr{not needed with new org above?} \st{As briefly outlined in \S\ref{sec:intro}, the scale at which resource disaggregation will happen is, at best, unclear. The goal of this paper is not to advocate any particular architecture for disaggregation datacenters. Nevertheless, we believe that some of the architectural aspects of disaggregated datacenters are inevitable for reasons of feasibility, performance and scalability. }
+% \cut{\sr{not needed with new org above?} \st{As briefly outlined in \S\ref{sec:intro}, the scale at which resource disaggregation will happen is, at best, unclear. The goal of this paper is not to advocate any particular architecture for disaggregation datacenters. Nevertheless, we believe that some of the architectural aspects of disaggregated datacenters are inevitable for reasons of feasibility, performance and scalability. }
 
-\sr{I'd replace para below by just saying that: in this section we explain our assumptions w.r.t. hardware (S2.1), system architecture (S2.2) and our  design `knobs' (S2.3). } 
-\st{We start this section by elaborating on our interpretation of a disaggregated datacenter, along with a discussion of some necessary architectural design decisions and the rationale behind these decisions (\S\ref{ssec:arch}). We then make some important assumptions regarding the usage model, implementation and execution of computing frameworks on this architecture (\S\ref{ssec:assumptions}) that allow us to explore the three questions outlined in \S\ref{sec:intro}. Finally, in \S\ref{ssec:summary}, we give a high-level overview of the experimental and simulation setup used in our study.}}
+% \sr{I'd replace para below by just saying that: in this section we explain our assumptions w.r.t. hardware (S2.1), system architecture (S2.2) and our  design `knobs' (S2.3). } 
+% \st{We start this section by elaborating on our interpretation of a disaggregated datacenter, along with a discussion of some necessary architectural design decisions and the rationale behind these decisions (\S\ref{ssec:arch}). We then make some important assumptions regarding the usage model, implementation and execution of computing frameworks on this architecture (\S\ref{ssec:assumptions}) that allow us to explore the three questions outlined in \S\ref{sec:intro}. Finally, in \S\ref{ssec:summary}, we give a high-level overview of the experimental and simulation setup used in our study.}}
 
 %
-\begin{figure*}
-	\centering
-	\label{fig:ddcIllustration}
-	\subfigure[Workload Characterization (\S\ref{sec:workloads})] {	
-	\begin{tikzpicture}[xscale=0.5, yscale=0.35]
+% \begin{figure*}
+% 	\centering
+% 	\label{fig:ddcIllustration}
+% 	\subfigure[Workload Characterization (\S\ref{sec:workloads})] {	
+% 	\begin{tikzpicture}[xscale=0.5, yscale=0.35]
 
-	% \draw[thick, fill=white] (4, 14) rectangle (10, 19);
-	% \draw (7, 18.25) node {{Coordinator}};
-	% \draw[thick] (4.25, 14.5) rectangle (9.75, 17.5);
-	% \draw (7, 17) node {\small{Partition$\to$Machine}};
-	% \draw (4.25, 16.5) -- (9.75, 16.5);
-	% \draw (7, 16) node {\small{Offset$\to$Partition}};
-	% \draw (4.25, 15.5) -- (9.75, 15.5);
-	% \draw (7, 15) node {\small{Key$\to$Offset} \footnotesize{(NoSQL only)}};
-	%
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (0, 12.5);
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (5, 12.5);
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (10, 12.5);
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (15, 12.5);
-	%
-	\draw[very thick, black, <->] (-1, 12.25) to [out=45, in=135] (5, 12.25);
-	% \draw[very thick, black, ->] (0.75, 13.25) -- (4, 12.25);
-	% \draw[very thick, black, <-] (-1, 12.25) to [out=45, in=180] (0.5, 13.75);
-	% \draw[very thick, black, ->] (0.5, 13.75) -- (9, 12.25);
-	% \draw[very thick, black, <-] (-1, 12.25) to [out=45, in=180] (0.25, 14.25);
-	% \draw[very thick, black, ->] (0.25, 14.25) -- (14, 12.25);
+% 	\draw[very thick, black, <->] (-1, 12.25) to [out=45, in=135] (5, 12.25);
 
-	% \draw[very thick, black, <->] (-0.5, 16.5) -- (-1.25, 12);
-	% \draw (-0.5, 17.5) node {\small{\tt search(string str)}};
-
-	\draw[thick, fill=white] (-3, 5) rectangle (1, 11); 
-	\draw[thick, fill=white] (-2, 12) rectangle (0, 10); 
-	\draw (-1, 11) node {\small{CPU}};
-	% \draw (-1, 10.5) node {\small{Handler}};
+% 	\draw[thick, fill=white] (-3, 5) rectangle (1, 11); 
+% 	\draw[thick, fill=white] (-2, 12) rectangle (0, 10); 
+% 	\draw (-1, 11) node {\small{CPU}};
+% 	% \draw (-1, 10.5) node {\small{Handler}};
 	
-	\draw[thick, fill=blue] (-2.75, 7.5) rectangle (-0.75, 8.5);
-	\draw[thick, fill=green] (-2.75, 5.5) rectangle (-0.75, 7.5);
-	\draw (-1.75, 8) node {\small{LM}};
-%	\draw (-2.75, 7.5) -- (-0.75, 7.5);
-	\draw (-1.75, 6.5) node {\small{RM}};
-%	\draw (-2.75, 6.5) -- (-0.75, 6.5);
-%	\draw (-1.75, 6) node {\small{K$\to$O}};
+% 	\draw[thick, fill=blue] (-2.75, 7.5) rectangle (-0.75, 8.5);
+% 	\draw[thick, fill=green] (-2.75, 5.5) rectangle (-0.75, 7.5);
+% 	\draw (-1.75, 8) node {\small{LM}};
+% %	\draw (-2.75, 7.5) -- (-0.75, 7.5);
+% 	\draw (-1.75, 6.5) node {\small{RM}};
+% %	\draw (-2.75, 6.5) -- (-0.75, 6.5);
+% %	\draw (-1.75, 6) node {\small{K$\to$O}};
 
-%	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
-	\draw[thick, fill=gray] (-0.25, 8.5) rectangle (0.75, 7.5);
-	\draw[thick, fill=gray] (-0.25, 5.5) rectangle (0.75, 6.5);
-	\draw (0.25, 7) node {\small{$\dots$}};
+% %	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
+% 	\draw[thick, fill=gray] (-0.25, 8.5) rectangle (0.75, 7.5);
+% 	\draw[thick, fill=gray] (-0.25, 5.5) rectangle (0.75, 6.5);
+% 	\draw (0.25, 7) node {\small{$\dots$}};
 
-	\draw[very thick, black, dashed, <->] (-1.5, 10) -- (-1.75, 8.5);
-	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (0.25, 8.5);
-	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (-0.45, 6);
+% 	\draw[very thick, black, dashed, <->] (-1.5, 10) -- (-1.75, 8.5);
+% 	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (0.25, 8.5);
+% 	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (-0.45, 6);
 
-	\draw (2, 6.5) node {\Large{$\dots$}};
+% 	\draw (2, 6.5) node {\Large{$\dots$}};
 
-		\draw[thick, fill=white] (3, 5) rectangle (7, 11); 
-		\draw[thick, fill=white] (4, 12) rectangle (6, 10); 
-		\draw (5, 11) node {\small{CPU}};
-		% \draw (5, 10.5) node {\small{Handler}};
+% 		\draw[thick, fill=white] (3, 5) rectangle (7, 11); 
+% 		\draw[thick, fill=white] (4, 12) rectangle (6, 10); 
+% 		\draw (5, 11) node {\small{CPU}};
+% 		% \draw (5, 10.5) node {\small{Handler}};
 
-		\draw[thick, fill=green] (3.25, 5.5) rectangle (5.25, 7.5);
-		\draw[thick, fill=blue] (3.25, 7.5) rectangle (5.25, 8.5);
-		\draw (4.25, 8) node {\small{LM}};
-		\draw (4.25, 6.5) node {\small{RM}};
+% 		\draw[thick, fill=green] (3.25, 5.5) rectangle (5.25, 7.5);
+% 		\draw[thick, fill=blue] (3.25, 7.5) rectangle (5.25, 8.5);
+% 		\draw (4.25, 8) node {\small{LM}};
+% 		\draw (4.25, 6.5) node {\small{RM}};
 
-	%	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
-		\draw[thick, fill=gray] (5.75, 8.5) rectangle (6.75, 7.5);
-		\draw[thick, fill=gray] (5.75, 5.5) rectangle (6.75, 6.5);
-		\draw (6.25, 7) node {\small{$\dots$}};
+% 	%	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
+% 		\draw[thick, fill=gray] (5.75, 8.5) rectangle (6.75, 7.5);
+% 		\draw[thick, fill=gray] (5.75, 5.5) rectangle (6.75, 6.5);
+% 		\draw (6.25, 7) node {\small{$\dots$}};
 
-		\draw[very thick, black, dashed, <->] (4.5, 10) -- (4.25, 8.5);
-		\draw[very thick, black, dashed, <->] (5.5, 10) -- (6.25, 8.5);
-		\draw[very thick, black, dashed, <->] (5.5, 10) -- (5.55, 6);
-
-		% \draw[thick, black] (-3, 4.75) -- (-2.9, 4.5);
-		% \draw[thick, black] (-2.9, 4.5) -- (1.75, 4.5);
-		% \draw[thick, black] (1.75, 4.5) to [in=90, out=0] (2, 4.25);
-		% \draw[thick, black] (2.25, 4.5) to [in=90, out=180] (2, 4.25);
-		% \draw[thick, black] (2.25, 4.5) -- (6.9, 4.5);
-		% \draw[thick, black] (7, 4.75) -- (6.9, 4.5);
-		% \draw (2, 3.75) node {\tt SuccinctStore};
+% 		\draw[very thick, black, dashed, <->] (4.5, 10) -- (4.25, 8.5);
+% 		\draw[very thick, black, dashed, <->] (5.5, 10) -- (6.25, 8.5);
+% 		\draw[very thick, black, dashed, <->] (5.5, 10) -- (5.55, 6);
 
 
-		% 	\draw[thick, fill=white] (8, 5) rectangle (12, 11);
-		% 	\draw[thick, fill=white] (9, 12) rectangle (11, 10);
-		% 	\draw (10, 11.5) node {\small{CPU}};
-		% 	% \draw (10, 10.5) node {\small{Handler}};
-		%
-		% 	\draw[thick] (8.25, 5.5) rectangle (10.25, 8.5);
-		% 	\draw (9.25, 8) node {\small{P$\to$M}};
-		% 	\draw (8.25, 7.5) -- (10.25, 7.5);
-		% 	\draw (9.25, 7) node {\small{O$\to$P}};
-		% 	\draw (8.25, 6.5) -- (10.25, 6.5);
-		% 	\draw (9.25, 6) node {\small{K$\to$O}};
-		%
-		% %	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
-		% 	\draw[thick, fill=gray] (10.75, 8.5) rectangle (11.75, 7.5);
-		% 	\draw[thick, fill=gray] (10.75, 5.5) rectangle (11.75, 6.5);
-		% 	\draw (11.25, 7) node {\small{$\dots$}};
-		%
-		% 	\draw[very thick, black, dashed, <->] (9.5, 10) -- (9.25, 8.5);
-		% 	\draw[very thick, black, dashed, <->] (10.5, 10) -- (11.25, 8.5);
-		% 	\draw[very thick, black, dashed, <->] (10.5, 10) -- (10.55, 6);
+
+% 			% \draw[thick, black] (8, 4.75) -- (8.1, 4.5);
+% 			% \draw[thick, black] (8.1, 4.5) -- (9.75, 4.5);
+% 			% \draw[thick, black] (9.75, 4.5) to [in=90, out=0] (10, 4.25);
+% 			% \draw[thick, black] (10.25, 4.5) to [in=90, out=180] (10, 4.25);
+% 			% \draw[thick, black] (10.25, 4.5) -- (11.9, 4.5);
+% 			% \draw[thick, black] (12, 4.75) -- (11.9, 4.5);
+% 			% \draw (10, 3.75) node {\tt SuffixStore};
 
 
-			% \draw[thick, black] (8, 4.75) -- (8.1, 4.5);
-			% \draw[thick, black] (8.1, 4.5) -- (9.75, 4.5);
-			% \draw[thick, black] (9.75, 4.5) to [in=90, out=0] (10, 4.25);
-			% \draw[thick, black] (10.25, 4.5) to [in=90, out=180] (10, 4.25);
-			% \draw[thick, black] (10.25, 4.5) -- (11.9, 4.5);
-			% \draw[thick, black] (12, 4.75) -- (11.9, 4.5);
-			% \draw (10, 3.75) node {\tt SuffixStore};
+% 			% 	\draw[thick, fill=white] (13, 5) rectangle (17, 11);
+% 			% 	\draw[thick, fill=white] (14, 12) rectangle (16, 10);
+% 			% 	\draw (15, 11.5) node {\small{CPU}};
+% 			% 	% \draw (15, 10.5) node {\small{Handler}};
+% 			%
+% 			% 	\draw[thick] (13.25, 5.5) rectangle (15.25, 8.5);
+% 			% 	\draw (14.25, 8) node {\small{P$\to$M}};
+% 			% 	\draw (13.25, 7.5) -- (15.25, 7.5);
+% 			% 	\draw (14.25, 7) node {\small{O$\to$P}};
+% 			% 	\draw (13.25, 6.5) -- (15.25, 6.5);
+% 			% 	\draw (14.25, 6) node {\small{K$\to$O}};
+% 			%
+% 			% %	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
+% 			% 	\draw[thick, fill=gray] (15.75, 8.5) rectangle (16.75, 7.5);
+% 			% 	\draw[thick, fill=gray] (15.75, 5.5) rectangle (16.75, 6.5);
+% 			% 	\draw (16.25, 7) node {\small{$\dots$}};
+% 			%
+% 			% 	\draw[very thick, black, dashed, <->] (14.5, 10) -- (14.25, 8.5);
+% 			% 	\draw[very thick, black, dashed, <->] (15.5, 10) -- (16.25, 8.5);
+% 			% 	\draw[very thick, black, dashed, <->] (15.5, 10) -- (15.55, 6);
+
+% 				% \draw[thick, black] (13, 4.75) -- (13.1, 4.5);
+% 				% \draw[thick, black] (13.1, 4.5) -- (14.75, 4.5);
+% 				% \draw[thick, black] (14.75, 4.5) to [in=90, out=0] (15, 4.25);
+% 				% \draw[thick, black] (15.25, 4.5) to [in=90, out=180] (15, 4.25);
+% 				% \draw[thick, black] (15.25, 4.5) -- (16.9, 4.5);
+% 				% \draw[thick, black] (17, 4.75) -- (16.9, 4.5);
+% 				% \draw (15, 3.75) node {\tt LogStore};
 
 
-			% 	\draw[thick, fill=white] (13, 5) rectangle (17, 11);
-			% 	\draw[thick, fill=white] (14, 12) rectangle (16, 10);
-			% 	\draw (15, 11.5) node {\small{CPU}};
-			% 	% \draw (15, 10.5) node {\small{Handler}};
-			%
-			% 	\draw[thick] (13.25, 5.5) rectangle (15.25, 8.5);
-			% 	\draw (14.25, 8) node {\small{P$\to$M}};
-			% 	\draw (13.25, 7.5) -- (15.25, 7.5);
-			% 	\draw (14.25, 7) node {\small{O$\to$P}};
-			% 	\draw (13.25, 6.5) -- (15.25, 6.5);
-			% 	\draw (14.25, 6) node {\small{K$\to$O}};
-			%
-			% %	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
-			% 	\draw[thick, fill=gray] (15.75, 8.5) rectangle (16.75, 7.5);
-			% 	\draw[thick, fill=gray] (15.75, 5.5) rectangle (16.75, 6.5);
-			% 	\draw (16.25, 7) node {\small{$\dots$}};
-			%
-			% 	\draw[very thick, black, dashed, <->] (14.5, 10) -- (14.25, 8.5);
-			% 	\draw[very thick, black, dashed, <->] (15.5, 10) -- (16.25, 8.5);
-			% 	\draw[very thick, black, dashed, <->] (15.5, 10) -- (15.55, 6);
+% 	\end{tikzpicture}
+% 	}
+% %  	\end{minipage}
+% %  	\begin{minipage}[c]{0.19\textwidth}
+% % 	    \caption{\small{{\bf Methodology Overview:} We run real-world applications on a $5$-node Amazon EC2 cluster and emulate disaggregated architecture as follows. The memory accesses are captured into ``local cache'' accesses and ``remote memory'' accesses using an in-house implementation of a special instrumentation tool (SIT) described in \S\ref{sec:workloads}. The local disk accesses are captured using the {\tt blktrace} utility. Finally, all remote memory and disk accesses are captured using {\tt TCPdump}.}}
+% % 	\label{fig:system}
+% % %	\end{minipage}
+% % \end{figure}
+% % %
+% % %
+% % %
+% % \begin{figure}
+% %  \begin{minipage}{0.33\textwidth}
+% % 	\centering
+% 	\hspace{0.1in}
+% 	\subfigure[Understanding application requirements (\S\ref{sec:requirements})] {	
+% 	\begin{tikzpicture}[xscale=0.6, yscale=0.35]
 
-				% \draw[thick, black] (13, 4.75) -- (13.1, 4.5);
-				% \draw[thick, black] (13.1, 4.5) -- (14.75, 4.5);
-				% \draw[thick, black] (14.75, 4.5) to [in=90, out=0] (15, 4.25);
-				% \draw[thick, black] (15.25, 4.5) to [in=90, out=180] (15, 4.25);
-				% \draw[thick, black] (15.25, 4.5) -- (16.9, 4.5);
-				% \draw[thick, black] (17, 4.75) -- (16.9, 4.5);
-				% \draw (15, 3.75) node {\tt LogStore};
+% 	% \draw[thick, fill=white] (4, 14) rectangle (10, 19);
+% 	% \draw (7, 18.25) node {{Coordinator}};
+% 	% \draw[thick] (4.25, 14.5) rectangle (9.75, 17.5);
+% 	% \draw (7, 17) node {\small{Partition$\to$Machine}};
+% 	% \draw (4.25, 16.5) -- (9.75, 16.5);
+% 	% \draw (7, 16) node {\small{Offset$\to$Partition}};
+% 	% \draw (4.25, 15.5) -- (9.75, 15.5);
+% 	% \draw (7, 15) node {\small{Key$\to$Offset} \footnotesize{(NoSQL only)}};
+% 	%
+% 	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (0, 12.5);
+% 	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (5, 12.5);
+% 	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (10, 12.5);
+% 	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (15, 12.5);
+% 	%
+% 	% \draw[very thick, black, <->] (-1, 12.25) to [out=45, in=135] (5, 12.25);
+% 	% \draw[very thick, black, ->] (0.75, 13.25) -- (4, 12.25);
+% 	% \draw[very thick, black, <-] (-1, 12.25) to [out=45, in=180] (0.5, 13.75);
+% 	% \draw[very thick, black, ->] (0.5, 13.75) -- (9, 12.25);
+% 	% \draw[very thick, black, <-] (-1, 12.25) to [out=45, in=180] (0.25, 14.25);
+% 	% \draw[very thick, black, ->] (0.25, 14.25) -- (14, 12.25);
 
+% 	% \draw[very thick, black, <->] (-0.5, 16.5) -- (-1.25, 12);
+% 	% \draw (-0.5, 17.5) node {\small{\tt search(string str)}};
 
-	\end{tikzpicture}
-	}
-%  	\end{minipage}
-%  	\begin{minipage}[c]{0.19\textwidth}
-% 	    \caption{\small{{\bf Methodology Overview:} We run real-world applications on a $5$-node Amazon EC2 cluster and emulate disaggregated architecture as follows. The memory accesses are captured into ``local cache'' accesses and ``remote memory'' accesses using an in-house implementation of a special instrumentation tool (SIT) described in \S\ref{sec:workloads}. The local disk accesses are captured using the {\tt blktrace} utility. Finally, all remote memory and disk accesses are captured using {\tt TCPdump}.}}
+% 	\draw[thick, fill=white] (-3, 5) rectangle (1, 13); 
+% 	\draw[thick, fill=white] (-2, 14) rectangle (0, 12); 
+% 	\draw (-1, 13) node {\small{CPU}};
+% 	% \draw (-1, 10.5) node {\small{Handler}};
+	
+% 	\draw[thick, fill=cyan] (-3.75, 9.9) rectangle (1.75, 11.1); 
+% 	\draw (-1, 10.5) node {\small{SIT (Latency Injection)}};
+			
+% 	\draw[thick, fill=blue] (-2.75, 7.5) rectangle (-0.75, 8.5);
+% 	\draw[thick, fill=green] (-2.75, 5.5) rectangle (-0.75, 7.5);
+% 	\draw (-1.75, 8) node {\small{LM}};
+% %	\draw (-2.75, 7.5) -- (-0.75, 7.5);
+% 	\draw (-1.75, 6.5) node {\small{RM}};
+% %	\draw (-2.75, 6.5) -- (-0.75, 6.5);
+% %	\draw (-1.75, 6) node {\small{K$\to$O}};
+
+% %	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
+% 	\draw[thick, fill=gray] (-0.25, 8.5) rectangle (0.75, 7.5);
+% 	\draw[thick, fill=gray] (-0.25, 5.5) rectangle (0.75, 6.5);
+% 	\draw (0.25, 7) node {\small{$\dots$}};
+
+% 	\draw[very thick, black, dashed, <->] (-1.5, 10) -- (-1.75, 8.5);
+% 	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (0.25, 8.5);
+% 	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (-0.45, 6);
+
+% 	\draw[very thick, black, dashed, <->] (-1.5, 11) -- (-1.5, 12);
+% 	\draw[very thick, black, dashed, <->] (-0.5, 11) -- (-0.5, 12);
+% 	\draw[very thick, black, dashed, <->] (-0.5, 11) -- (-0.5, 12);
+
+% 	\end{tikzpicture}
+% 	}
+% %  	\end{minipage}\hfill
+% %  	\begin{minipage}[c]{0.19\textwidth}
+% % 	    \caption{\small{{\bf Methodology Overview:} We run real-world applications on a $5$-node Amazon EC2 cluster. To emulate end-to-end network latency, we inject artificial latencies for all ``remote memory'' and ``remote disk'' accesses and measure the impact of this latency to the application-level performance.}}
+% % 	\label{fig:system}
+% %	\end{minipage}
+% % \end{figure}
+% % %
+% % %
+% % \begin{figure}
+% %  \begin{minipage}{0.33\textwidth}
+% % 	\centering
+% 	\hspace{0.1in}
+% 	\subfigure[Exploring sufficiency of existing solutions (\S\ref{sec:existing})] {	
+% 	\begin{tikzpicture}[xscale=0.6, yscale=0.35]
+
+% 	% \draw[thick, fill=white] (4, 14) rectangle (10, 19);
+% 	% \draw (7, 18.25) node {{Coordinator}};
+% 	% \draw[thick] (4.25, 14.5) rectangle (9.75, 17.5);
+% 	% \draw (7, 17) node {\small{Partition$\to$Machine}};
+% 	% \draw (4.25, 16.5) -- (9.75, 16.5);
+% 	% \draw (7, 16) node {\small{Offset$\to$Partition}};
+% 	% \draw (4.25, 15.5) -- (9.75, 15.5);
+% 	% \draw (7, 15) node {\small{Key$\to$Offset} \footnotesize{(NoSQL only)}};
+% 	%
+% 	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (0, 12.5);
+% 	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (5, 12.5);
+% 	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (10, 12.5);
+% 	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (15, 12.5);
+% 	%
+% 	% \draw[very thick, black, <->] (-1, 12.25) to [out=45, in=135] (5, 12.25);
+% 	% \draw[very thick, black, ->] (0.75, 13.25) -- (4, 12.25);
+% 	% \draw[very thick, black, <-] (-1, 12.25) to [out=45, in=180] (0.5, 13.75);
+% 	% \draw[very thick, black, ->] (0.5, 13.75) -- (9, 12.25);
+% 	% \draw[very thick, black, <-] (-1, 12.25) to [out=45, in=180] (0.25, 14.25);
+% 	% \draw[very thick, black, ->] (0.25, 14.25) -- (14, 12.25);
+
+% 	% \draw[very thick, black, <->] (-0.5, 16.5) -- (-1.25, 12);
+% 	% \draw (-0.5, 17.5) node {\small{\tt search(string str)}};
+
+% 	\draw[thick, fill=white] (-8, 5) rectangle (-5, 9); 
+% 	\draw[thick, fill=white] (-8, 9.75) rectangle (-5, 11.25); 
+% 	\draw[thick, fill=white] (-8, 12) rectangle (-5, 14); 
+% 	\draw (-6.5, 8.5) node {\small{Network}};
+% 	\draw (-6.5, 7.5) node {\small{Simulator}};
+% 	\draw (-6.5, 6.5) node {\small{(Individual}};
+% 	\draw (-6.5, 5.5) node {\small{Flow delays)}};
+% 	\draw (-6.5, 10.5) node {\small{Scale up}};
+% 	\draw (-6.5, 13.5) node {\small{Flows from}};
+% 	\draw (-6.5, 12.5) node {\small{Step (a)}};
+% 	\draw[thick, black, ->] (-6.5, 12) -- (-6.5, 11.25);
+% 	\draw[thick, black, ->] (-6.5, 9.75) -- (-6.5, 9);
+% 	\draw[thick, black, -] (-5, 7) -- (-4.5, 7);
+% 	\draw[thick, black, -] (-4.5, 7) -- (-4.5, 10.5);
+% 	\draw[thick, black, ->] (-4.5, 10.5) -- (-3.75, 10.5);
+
+% 	\draw[thick, fill=white] (-3, 5) rectangle (1, 13); 
+% 	\draw[thick, fill=white] (-2, 14) rectangle (0, 12); 
+% 	\draw (-1, 13) node {\small{CPU}};
+% 	% \draw (-1, 10.5) node {\small{Handler}};
+	
+% 	\draw[thick, fill=cyan] (-3.75, 9.9) rectangle (1.75, 11.1); 
+% 	\draw (-1, 10.5) node {\small{SIT (Latency Injection)}};
+			
+% 	\draw[thick, fill=blue] (-2.75, 7.5) rectangle (-0.75, 8.5);
+% 	\draw[thick, fill=green] (-2.75, 5.5) rectangle (-0.75, 7.5);
+% 	\draw (-1.75, 8) node {\small{LM}};
+% %	\draw (-2.75, 7.5) -- (-0.75, 7.5);
+% 	\draw (-1.75, 6.5) node {\small{RM}};
+% %	\draw (-2.75, 6.5) -- (-0.75, 6.5);
+% %	\draw (-1.75, 6) node {\small{K$\to$O}};
+
+% %	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
+% 	\draw[thick, fill=gray] (-0.25, 8.5) rectangle (0.75, 7.5);
+% 	\draw[thick, fill=gray] (-0.25, 5.5) rectangle (0.75, 6.5);
+% 	\draw (0.25, 7) node {\small{$\dots$}};
+
+% 	\draw[very thick, black, dashed, <->] (-1.5, 10) -- (-1.75, 8.5);
+% 	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (0.25, 8.5);
+% 	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (-0.45, 6);
+
+% 	\draw[very thick, black, dashed, <->] (-1.5, 11) -- (-1.5, 12);
+% 	\draw[very thick, black, dashed, <->] (-0.5, 11) -- (-0.5, 12);
+% 	\draw[very thick, black, dashed, <->] (-0.5, 11) -- (-0.5, 12);
+
+% 	\end{tikzpicture}
+% 	}
+% %  	\end{minipage}
+% %  	\begin{minipage}[c]{0.19\textwidth}
+% 	    \caption{\small{(left) {\bf Workload Characterization:} We run real-world applications on a $5$-node Amazon EC2 cluster and emulate disaggregated architecture as follows. The memory accesses are captured into ``local cache'' accesses and ``remote memory'' accesses using an in-house implementation of a special instrumentation tool (SIT) described in \S\ref{sec:workloads}. The local disk accesses are captured using the {\tt blktrace} utility. Finally, all remote memory and disk accesses are captured using {\tt TCPdump}. (center) {\bf Understanding application requirements:} We run real-world applications on a $5$-node Amazon EC2 cluster. To emulate end-to-end network latency, we inject artificial latencies for all ``remote memory'' and ``remote disk'' accesses and measure the impact of this latency to the application-level performance. (right) {\bf Exploring sufficiency of existing solutions:} Same as Step 2, but the latencies injected for each flow are now a result of network simulation results. \rc{SIT representation imprecise}}}
 % 	\label{fig:system}
 % %	\end{minipage}
-% \end{figure}
-% %
-% %
-% %
-% \begin{figure}
-%  \begin{minipage}{0.33\textwidth}
-% 	\centering
-	\hspace{0.1in}
-	\subfigure[Understanding application requirements (\S\ref{sec:requirements})] {	
-	\begin{tikzpicture}[xscale=0.6, yscale=0.35]
-
-	% \draw[thick, fill=white] (4, 14) rectangle (10, 19);
-	% \draw (7, 18.25) node {{Coordinator}};
-	% \draw[thick] (4.25, 14.5) rectangle (9.75, 17.5);
-	% \draw (7, 17) node {\small{Partition$\to$Machine}};
-	% \draw (4.25, 16.5) -- (9.75, 16.5);
-	% \draw (7, 16) node {\small{Offset$\to$Partition}};
-	% \draw (4.25, 15.5) -- (9.75, 15.5);
-	% \draw (7, 15) node {\small{Key$\to$Offset} \footnotesize{(NoSQL only)}};
-	%
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (0, 12.5);
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (5, 12.5);
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (10, 12.5);
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (15, 12.5);
-	%
-	% \draw[very thick, black, <->] (-1, 12.25) to [out=45, in=135] (5, 12.25);
-	% \draw[very thick, black, ->] (0.75, 13.25) -- (4, 12.25);
-	% \draw[very thick, black, <-] (-1, 12.25) to [out=45, in=180] (0.5, 13.75);
-	% \draw[very thick, black, ->] (0.5, 13.75) -- (9, 12.25);
-	% \draw[very thick, black, <-] (-1, 12.25) to [out=45, in=180] (0.25, 14.25);
-	% \draw[very thick, black, ->] (0.25, 14.25) -- (14, 12.25);
-
-	% \draw[very thick, black, <->] (-0.5, 16.5) -- (-1.25, 12);
-	% \draw (-0.5, 17.5) node {\small{\tt search(string str)}};
-
-	\draw[thick, fill=white] (-3, 5) rectangle (1, 13); 
-	\draw[thick, fill=white] (-2, 14) rectangle (0, 12); 
-	\draw (-1, 13) node {\small{CPU}};
-	% \draw (-1, 10.5) node {\small{Handler}};
-	
-	\draw[thick, fill=cyan] (-3.75, 9.9) rectangle (1.75, 11.1); 
-	\draw (-1, 10.5) node {\small{SIT (Latency Injection)}};
-			
-	\draw[thick, fill=blue] (-2.75, 7.5) rectangle (-0.75, 8.5);
-	\draw[thick, fill=green] (-2.75, 5.5) rectangle (-0.75, 7.5);
-	\draw (-1.75, 8) node {\small{LM}};
-%	\draw (-2.75, 7.5) -- (-0.75, 7.5);
-	\draw (-1.75, 6.5) node {\small{RM}};
-%	\draw (-2.75, 6.5) -- (-0.75, 6.5);
-%	\draw (-1.75, 6) node {\small{K$\to$O}};
-
-%	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
-	\draw[thick, fill=gray] (-0.25, 8.5) rectangle (0.75, 7.5);
-	\draw[thick, fill=gray] (-0.25, 5.5) rectangle (0.75, 6.5);
-	\draw (0.25, 7) node {\small{$\dots$}};
-
-	\draw[very thick, black, dashed, <->] (-1.5, 10) -- (-1.75, 8.5);
-	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (0.25, 8.5);
-	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (-0.45, 6);
-
-	\draw[very thick, black, dashed, <->] (-1.5, 11) -- (-1.5, 12);
-	\draw[very thick, black, dashed, <->] (-0.5, 11) -- (-0.5, 12);
-	\draw[very thick, black, dashed, <->] (-0.5, 11) -- (-0.5, 12);
-
-	\end{tikzpicture}
-	}
-%  	\end{minipage}\hfill
-%  	\begin{minipage}[c]{0.19\textwidth}
-% 	    \caption{\small{{\bf Methodology Overview:} We run real-world applications on a $5$-node Amazon EC2 cluster. To emulate end-to-end network latency, we inject artificial latencies for all ``remote memory'' and ``remote disk'' accesses and measure the impact of this latency to the application-level performance.}}
-% 	\label{fig:system}
-%	\end{minipage}
-% \end{figure}
-% %
-% %
-% \begin{figure}
-%  \begin{minipage}{0.33\textwidth}
-% 	\centering
-	\hspace{0.1in}
-	\subfigure[Exploring sufficiency of existing solutions (\S\ref{sec:existing})] {	
-	\begin{tikzpicture}[xscale=0.6, yscale=0.35]
-
-	% \draw[thick, fill=white] (4, 14) rectangle (10, 19);
-	% \draw (7, 18.25) node {{Coordinator}};
-	% \draw[thick] (4.25, 14.5) rectangle (9.75, 17.5);
-	% \draw (7, 17) node {\small{Partition$\to$Machine}};
-	% \draw (4.25, 16.5) -- (9.75, 16.5);
-	% \draw (7, 16) node {\small{Offset$\to$Partition}};
-	% \draw (4.25, 15.5) -- (9.75, 15.5);
-	% \draw (7, 15) node {\small{Key$\to$Offset} \footnotesize{(NoSQL only)}};
-	%
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (0, 12.5);
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (5, 12.5);
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (10, 12.5);
-	% \draw[very thick, dashed, gray, <->] (7, 13.75) -- (15, 12.5);
-	%
-	% \draw[very thick, black, <->] (-1, 12.25) to [out=45, in=135] (5, 12.25);
-	% \draw[very thick, black, ->] (0.75, 13.25) -- (4, 12.25);
-	% \draw[very thick, black, <-] (-1, 12.25) to [out=45, in=180] (0.5, 13.75);
-	% \draw[very thick, black, ->] (0.5, 13.75) -- (9, 12.25);
-	% \draw[very thick, black, <-] (-1, 12.25) to [out=45, in=180] (0.25, 14.25);
-	% \draw[very thick, black, ->] (0.25, 14.25) -- (14, 12.25);
-
-	% \draw[very thick, black, <->] (-0.5, 16.5) -- (-1.25, 12);
-	% \draw (-0.5, 17.5) node {\small{\tt search(string str)}};
-
-	\draw[thick, fill=white] (-8, 5) rectangle (-5, 9); 
-	\draw[thick, fill=white] (-8, 9.75) rectangle (-5, 11.25); 
-	\draw[thick, fill=white] (-8, 12) rectangle (-5, 14); 
-	\draw (-6.5, 8.5) node {\small{Network}};
-	\draw (-6.5, 7.5) node {\small{Simulator}};
-	\draw (-6.5, 6.5) node {\small{(Individual}};
-	\draw (-6.5, 5.5) node {\small{Flow delays)}};
-	\draw (-6.5, 10.5) node {\small{Scale up}};
-	\draw (-6.5, 13.5) node {\small{Flows from}};
-	\draw (-6.5, 12.5) node {\small{Step (a)}};
-	\draw[thick, black, ->] (-6.5, 12) -- (-6.5, 11.25);
-	\draw[thick, black, ->] (-6.5, 9.75) -- (-6.5, 9);
-	\draw[thick, black, -] (-5, 7) -- (-4.5, 7);
-	\draw[thick, black, -] (-4.5, 7) -- (-4.5, 10.5);
-	\draw[thick, black, ->] (-4.5, 10.5) -- (-3.75, 10.5);
-
-	\draw[thick, fill=white] (-3, 5) rectangle (1, 13); 
-	\draw[thick, fill=white] (-2, 14) rectangle (0, 12); 
-	\draw (-1, 13) node {\small{CPU}};
-	% \draw (-1, 10.5) node {\small{Handler}};
-	
-	\draw[thick, fill=cyan] (-3.75, 9.9) rectangle (1.75, 11.1); 
-	\draw (-1, 10.5) node {\small{SIT (Latency Injection)}};
-			
-	\draw[thick, fill=blue] (-2.75, 7.5) rectangle (-0.75, 8.5);
-	\draw[thick, fill=green] (-2.75, 5.5) rectangle (-0.75, 7.5);
-	\draw (-1.75, 8) node {\small{LM}};
-%	\draw (-2.75, 7.5) -- (-0.75, 7.5);
-	\draw (-1.75, 6.5) node {\small{RM}};
-%	\draw (-2.75, 6.5) -- (-0.75, 6.5);
-%	\draw (-1.75, 6) node {\small{K$\to$O}};
-
-%	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
-	\draw[thick, fill=gray] (-0.25, 8.5) rectangle (0.75, 7.5);
-	\draw[thick, fill=gray] (-0.25, 5.5) rectangle (0.75, 6.5);
-	\draw (0.25, 7) node {\small{$\dots$}};
-
-	\draw[very thick, black, dashed, <->] (-1.5, 10) -- (-1.75, 8.5);
-	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (0.25, 8.5);
-	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (-0.45, 6);
-
-	\draw[very thick, black, dashed, <->] (-1.5, 11) -- (-1.5, 12);
-	\draw[very thick, black, dashed, <->] (-0.5, 11) -- (-0.5, 12);
-	\draw[very thick, black, dashed, <->] (-0.5, 11) -- (-0.5, 12);
-
-	\end{tikzpicture}
-	}
-%  	\end{minipage}
-%  	\begin{minipage}[c]{0.19\textwidth}
-	    \caption{\small{(left) {\bf Workload Characterization:} We run real-world applications on a $5$-node Amazon EC2 cluster and emulate disaggregated architecture as follows. The memory accesses are captured into ``local cache'' accesses and ``remote memory'' accesses using an in-house implementation of a special instrumentation tool (SIT) described in \S\ref{sec:workloads}. The local disk accesses are captured using the {\tt blktrace} utility. Finally, all remote memory and disk accesses are captured using {\tt TCPdump}. (center) {\bf Understanding application requirements:} We run real-world applications on a $5$-node Amazon EC2 cluster. To emulate end-to-end network latency, we inject artificial latencies for all ``remote memory'' and ``remote disk'' accesses and measure the impact of this latency to the application-level performance. (right) {\bf Exploring sufficiency of existing solutions:} Same as Step 2, but the latencies injected for each flow are now a result of network simulation results. \rc{SIT representation imprecise}}}
-	\label{fig:system}
-%	\end{minipage}
-\end{figure*}
+% \end{figure*}
 %
 
 %\paragraphb{Virtualization, resource allocation and scheduling}
@@ -427,32 +381,33 @@ The assumptions regarding hardware and software architecture in \dis leave us wi
 % \paragraphb{Block-level remote storage access}
 % We assume that CPU blades access remote storage at the block granularity (4KB in x86) over the fabric. This is the storage access granularity between CPU and current storage devices (disk, SSD, etc) in traditional servers.
 
-\cut{
-\subsection{Methodology Overview}
-\sr{skip this section and insert methodology inline with each section as relevant? It's too hard to follow (or weigh) at this point.}
+% \cut{
+% \subsection{Methodology Overview}
+% \sr{skip this section and insert methodology inline with each section as relevant? It's too hard to follow (or weigh) at this point.}
 
-Figure~\ref{fig:system} gives a high-level overview of our methodology to explore the three questions outlined in \S\ref{sec:intro}. We provide details for each of the three steps in respective sections, but note that the requirements from the network fabric are heavily dependent on the underlying application. To that end, we explore a wide variety of applications varying from batch processing (long running background jobs), point queries (user facing short jobs) and stream processing (real-time data analytics), as outlined in Table~\ref{tab:workloads}. }
+% Figure~\ref{fig:system} gives a high-level overview of our methodology to explore the three questions outlined in \S\ref{sec:intro}. We provide details for each of the three steps in respective sections, but note that the requirements from the network fabric are heavily dependent on the underlying application. To that end, we explore a wide variety of applications varying from batch processing (long running background jobs), point queries (user facing short jobs) and stream processing (real-time data analytics), as outlined in Table~\ref{tab:workloads}. }
 %Each of these applications typically have very different data read/write patterns, which will translate to very different traffic patterns in disaggregated datacenters. In fact, within these application types, each particular system and/or algorithm may have different patterns. To that end, we use all six different workloads across these three applications in our evaluation. These workloads are described in Table~\ref{tab:workloads}.
 
-\begin{table*}
-	\centering
-	\caption{\small{Workloads and applications used in our evaluation. \rc{Describe data sizes for each application; and the datasets}}}
-	\label{tab:workloads}
-	\vspace{0.1in}
-  \begin{tabular}{c|c|c|c}
-	  \hline
-		\textbf{Application} & \textbf{Application} & \textbf{System} & \textbf{Abbreviation}\\
-		\textbf{domain} & \textbf{} & \textbf{} & \textbf{}\\\hline \hline
-    Batch & WordCount & Hadoop & BC1\\\hline
-    Batch & WordCount & Spark & BC2\\\hline
-    Batch & TeraSort & Hadoop & BT\\\hline
-    Batch & Collaborative Filtering & GraphLab & BG\\\hline
-    Point Queries & Key-value store & Memcached & PKV\\\hline
-    Point Queries & Search & ElasticSearch & PS\\\hline
-    Stream Processing & Wordcount & Storm & S\\\hline
-    \hline
-\end{tabular}
-\end{table*}
+% \begin{table}
+% 	\centering
+% 	\caption{\small{Workloads and applications used in our evaluation. \rc{Describe data sizes for each application; and the datasets}}}
+% 	\label{tab:workloads}
+% 	\vspace{0.1in}
+%   \begin{tabular}{c|c|c}
+% 	  \hline
+% 		\textbf{Application} & \textbf{Application} & \textbf{System}\\
+% 		\textbf{domain} & \textbf{} & \textbf{}\\\hline \hline
+%     Batch & WordCount & Hadoop\\\hline
+%     Batch & WordCount & Spark\\\hline
+%     Batch & TeraSort & Hadoop\\\hline
+%     Batch & Collaborative & GraphLab\\
+%      & Filtering & \\\hline
+%     Point Queries & Key-value store & Memcached\\\hline
+%     % Point Queries & Search & ElasticSearch & PS\\\hline
+%     % Stream Processing & Wordcount & Storm & S\\\hline
+%     \hline
+% \end{tabular}
+% \end{table}
 
 %
 % \subsection{Summary of key findings}

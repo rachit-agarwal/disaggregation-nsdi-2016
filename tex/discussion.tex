@@ -1,28 +1,47 @@
-\section{Discussion and Related Work}
+\section{Related Work and Discussion}
 \label{sec:discussion}
-\begin{itemize}
-	\item Limitations
-		\begin{itemize}
-			\item Ignores application-level constraints
-				\begin{itemize}
-					\item Flow inter-dependency
-					\item data placement and striping
-					\item Deadlines
-				\end{itemize}				
-			\item Could design applications for DDC
-				\begin{itemize}
-					\item Not the focus of this paper; focus on showing feasibility rather than new designs
-					\item better scheduling mechanisms
-					\item better resource packing
-					\item 
-				\end{itemize}				
-			\item Ignored failures, etc.
-			\item mix of applications
-		\end{itemize}		
-	\item Research Challenges: looking ahead
-		\begin{itemize}
-			\item Designing low-latency networks
-			\item Network abstractions for DDC?
-			\item OS and system architecture
-		\end{itemize}		
-\end{itemize}
+
+\subsection{Related Work}
+As mentioned earlier, there is growing interest in disaggregation in both industry and research~\cite{hptm, seamicro, fdr, rsa, firebox, sonuma, ddcHwDesign1, ddcHwDesign2, ddcHwDesign3, hotnets}. We build on these efforts --– in particular prior work on understanding how memory might be disaggregated~\cite{ddcHwDesign2, ddcHwDesign3} as a starting point. To date, these efforts consider disaggregation at server or rack scale and, as such, they use specialized interconnects designed for their specific context and do not discuss network support for disaggregation more generally nor consider the possibility of leveraging known datacenter network technologies to enable disaggregation; e.g., the network in SeaMicro’s architecture implements a 3D torus interconnect, which only disaggregates I/O and does not scale beyond the rack.
+
+\subsection{Limitations}
+One limitation of our results is our application-agnostic measurement approach. While this models disaggregation at the operating system level, it misses any potential application-specific considerations such as the interdependency of flows and its effect on performance. As a result we did not model potential application-specific optimizations such as custom data placement strategies or prioritizing flows based on the access dependency graph. We also did not study failure modes or running mixes of applications together. Our results therefore focus on demonstrating the feasibility of disaggregation rather than showcasing novel designs. Future work in this regard may focus on improving resource packing or data access scheduling mechanisms.
+
+\subsection{Looking Ahead}
+Going forward we anticipate work in designing disaggregated datacenters will fall into three categories - low-latency networks, network abstractions, and system architecture. We summarize these areas, discussed earlier in prior work~\cite{hotnets}, below.
+
+\paragraphb{Low-latency networks}
+As demonstrated in \S\ref{sec:requirements} low latency networks will be a critical part of building  disaggregated datacenters on a large scale. Fortunately this is a hot topic in networking~\cite{lowlatency, pfabric} and networks will likely achieve the bounds specific in this paper.
+
+\paragraphb{Network Architecture}
+It is worth noting that disaggregation effectively blurs the lines between what used to be separate intra- and inter-server networks as observed in \S\ref{sec:workloads}. Basic concepts such as variable-sized packets and best-effort service are common in inter-server networks but not so in intra-server links/networks, causing differences in traffic characteristics. Future network architectures should take these considerations into account.
+
+\paragraphb{System Architecture}
+While this paper used a VM abstraction for emulation disaggregated datacenters, it is unclear whether this will remain the right abstraction going forward. For example, a job-centric abstraction in which users specify resource needs rather than provisioning VMs could prove to be a more flexible and natural abstraction to express tasks in the future.
+
+%\begin{itemize}
+%	\item Limitations
+%		\begin{itemize}
+%			\item Ignores application-level constraints
+%				\begin{itemize}
+%					\item Flow inter-dependency
+%					\item data placement and striping
+%					\item Deadlines
+%				\end{itemize}				
+%			\item Could design applications for DDC
+%				\begin{itemize}
+%					\item Not the focus of this paper; focus on showing feasibility rather than new designs
+%					\item better scheduling mechanisms
+%					\item better resource packing
+%					\item 
+%				\end{itemize}				
+%			\item Ignored failures, etc.
+%			\item mix of applications
+%		\end{itemize}		
+%	\item Research Challenges: looking ahead
+%		\begin{itemize}
+%			\item Designing low-latency networks
+%			\item Network abstractions for DDC?
+%			\item OS and system architecture
+%		\end{itemize}		
+%\end{itemize}
