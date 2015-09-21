@@ -1,5 +1,17 @@
-\section{\dis Application Requirements}
+\section{\dis Network Performance Requirements}
 \label{sec:requirements}
+
+Outline: 
+\begin{itemize}
+\item we start by evaluating the basic latency and BW requirements that the network must provide in order to offer acceptable application performance. Start with methodology, then results, then implications. 
+\item Methodology: (1) we focus on the impact of disaggregating memory on application performance; ignore disk for now (say why), (2) approach: each blade sees the network as a pipe with constant latency and BW  and we inject parameters; this ignores the potential effects due to congestion but we'll capture these in the next two sections (including the effects of disk traffic hitting the net). 
+Gory details of how we measure.
+\item Clearly, biggest impact will come from amount of local memory available. So we start by evaluating the impact of that. Show graph. Conclude 30\% (25\%??). From here on, unless stated otherwise, we're running with 30\%
+\item Next, inject different combinations of latency and BW. Conclude 5 (or 5-10?) and 40. 
+\item Implications (\#1) BW not a problem; latency is non-trivial. Let's consider feasibility. 
+\item Feasibility of latency: `unavoidable' costs: tx delay and prop delay. Note that tx delay is non-trivial. Three implications of this: (\#2) can't afford any/much queueing delay (i.e., no congestion). Will return to evaluate the feasibilty of zero/low queueing delay in S5, and (\#3) Ignoring congestion, rack vs. dc-scale not such a big diff. Only alters the prop delay component. So perhaps dc-scale is OK. Finally, (\#4), a good reason to consider 100G (which is already available today at both switch ports and server NICs but not commonly deployed) is, not because we need the capacity, but to reduce (tx) latency. 
+\end{itemize}
+
 In this section, we explore the second question: what support do applications in \dis require from the network, in terms of bandwidth and latency, to maintain the performance observed in existing \pdis? We start by describing the methodology used to explore this question (\S\ref{ssec:rmethod}), discuss the requirements (\S\ref{ssec:rr}) and discuss how current technology trends are favorable towards achieving these requirements (\S\ref{ssec:rtt}).
 
 \subsection{Methodology}
@@ -8,13 +20,81 @@ For memory accesses, there are two main sources of performance penalty. First, s
 
 We use the SIT, described in \S\ref{sec:workloads}, to emulate remote memory access. Specifically, SIT implements a special swap device (backed by physical memory rather than a disk) allowing us to inject artificial delays to emulate network round-trip latency and bandwidth for each paging operation. We measure relative performance on the basis of throughput or request completion time as compared to the zero-delay case. \rc{Talk about the limitations --- does not take into account OS overhead, and end-to-end network delays.}
 
+%
+\begin{table}
+	\centering
+	\caption{\small{Workloads and applications used in our evaluation. \rc{Describe data sizes for each application; and the datasets}}}
+	\label{tab:workloads}
+	\vspace{0.1in}
+  \begin{tabular}{c|c|c}
+	  \hline
+		\textbf{Application} & \textbf{Application} & \textbf{System}\\
+		\textbf{domain} & \textbf{} & \textbf{}\\\hline \hline
+    Batch & WordCount & Hadoop\\\hline
+    Batch & WordCount & Spark\\\hline
+    Batch & TeraSort & Hadoop\\\hline
+    Batch & Collaborative & GraphLab\\
+     & Filtering & \\\hline
+    Point Queries & Key-value store & Memcached\\\hline
+    % Point Queries & Search & ElasticSearch & PS\\\hline
+    % Stream Processing & Wordcount & Storm & S\\\hline
+    \hline
+\end{tabular}
+\end{table}
+
+%
+\begin{figure}
+	\centering
+	\begin{tikzpicture}[xscale=0.6, yscale=0.35]
+
+	\draw[thick, fill=white] (-3, 5) rectangle (1, 13); 
+	\draw[thick, fill=white] (-2, 14) rectangle (0, 12); 
+	\draw (-1, 13) node {\small{CPU}};
+	% \draw (-1, 10.5) node {\small{Handler}};
+	
+	\draw[thick, fill=cyan] (-3.75, 9.9) rectangle (1.75, 11.1); 
+	\draw (-1, 10.5) node {\small{SIT (Latency Injection)}};
+			
+	\draw[thick, fill=blue] (-2.75, 7.5) rectangle (-0.75, 8.5);
+	\draw[thick, fill=green] (-2.75, 5.5) rectangle (-0.75, 7.5);
+	\draw (-1.75, 8) node {\small{LM}};
+%	\draw (-2.75, 7.5) -- (-0.75, 7.5);
+	\draw (-1.75, 6.5) node {\small{RM}};
+%	\draw (-2.75, 6.5) -- (-0.75, 6.5);
+%	\draw (-1.75, 6) node {\small{K$\to$O}};
+
+%	\draw[thick] (-0.25, 5.5) rectangle (0.75, 8.5);
+	\draw[thick, fill=gray] (-0.25, 8.5) rectangle (0.75, 7.5);
+	\draw[thick, fill=gray] (-0.25, 5.5) rectangle (0.75, 6.5);
+	\draw (0.25, 7) node {\small{$\dots$}};
+
+	\draw[very thick, black, dashed, <->] (-1.5, 10) -- (-1.75, 8.5);
+	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (0.25, 8.5);
+	\draw[very thick, black, dashed, <->] (-0.5, 10) -- (-0.45, 6);
+
+	\draw[very thick, black, dashed, <->] (-1.5, 11) -- (-1.5, 12);
+	\draw[very thick, black, dashed, <->] (-0.5, 11) -- (-0.5, 12);
+	\draw[very thick, black, dashed, <->] (-0.5, 11) -- (-0.5, 12);
+
+	\end{tikzpicture}
+	    \caption{\small{We run real-world applications on a $5$-node Amazon EC2 cluster. To emulate end-to-end network latency, we inject artificial latencies for all ``remote memory'' and ``remote disk'' accesses and measure the impact of this latency to the application-level performance. \rc{SIT representation imprecise}}}
+	\label{fig:system1}
+\end{figure}
+%
 \subsection{Requirements}
 \label{ssec:rr}
 
 %
 \begin{figure*}
+
   \centering
-    \includegraphics[width = 7in]{img/vary_latency_bw.eps} 
+  \subfigure{
+    \includegraphics[height = 1.5in]{img/vary_latency_bw.eps}  
+  }
+%\hspace{0.05in}
+  \subfigure{
+    \includegraphics[height = 1.5in]{img/vary_latency_bw_spark.eps}
+  }
   \caption{\small{\rqc{The main figure for varying latency and bandwidth. One bar graph, one set of bars for each application; one bar for each configuration.}}}
   \label{fig:latb}
 \end{figure*}
