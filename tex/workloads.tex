@@ -162,7 +162,7 @@ Interestingly, in memcached the number of flows in \dis is fewer than in \pdis. 
     \includegraphics[width = 2.3in]{img/graph4_interdist_pdis}
 	\label{fig:sdds}
   }
-  \caption{\small{Flow arrival time distribution in \dis and \pdis. All the applications go into one figure: six lines in the CDF, one for each application. The same thing for \pdis.}}
+  \caption{\small{Flow arrival time distribution in \dis and \pdis. All the applications go into one figure: six lines in the CDF, one for each application. The same thing for \pdis. \rc{if figure stays look at graphlab going to 1}}
   \label{fig:fat}
 \end{figure}
 %
@@ -226,7 +226,7 @@ Just as memcached exhibits a greater number of flows in \pdis, its traffic volum
 \label{sssec:spatialdist}
 We now study the spatial distribution of traffic in \dis (see Figure~\ref{fig:sd}). Note that all traffic represented in Figure~\ref{fig:sdds} has a CPU as either its source or destination. This is a consequence of our assumption as discussed in \S~\ref{sec:summary} that CPUs do not share memory or disk resources. One could however imagine alternate models in which not all traffic is CPU-based. For example, disk accesses could be sent to the CPU that requested them while simultaneously being cached in remote memory. We leave an exploration of this design space to future work.
 
-Also note that there are slightly more traffic volume to the first memory blades than to memory blades farther rightwards and upwards in the heatmap. Digging deeper, we found that lower memory addresses were more popular in the application shown, terasort (results for other applications are in . As a result, the memory blade that lower addresses were mapped to in our range hashing experienced a greater traffic volume from CPUs. This suggests that depending on the application's data access patterns, a different address mapping may be needed.
+Also note that there are slightly more traffic volume to the first memory blades than to memory blades farther rightwards and upwards in the heatmap. Digging deeper, we found that lower memory addresses were more popular in the application shown, terasort\footnote{results for other applications are in Appendix ~\ref{sec:appendix}}. As a result, the memory blade that lower addresses were mapped to in our range hashing experienced a greater traffic volume from CPUs. This suggests that depending on the application's data access patterns, a different address mapping may be needed.
 %First, when compared to \pdis, the traffic in \dis is significantly well distributed across the source-destination pairs. Indeed, the \dis architecture allows distributing a single read/write traffic across multiple nodes spatially distributed across the network. Second, the overall spatial distribution in \dis has significantly lower temperature than in \pdis, implying that on an average, each source-destination pair observes significantly lower traffic volume in \dis when compared to \pdis.
 
 \subsubsection{Temporal distribution}

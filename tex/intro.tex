@@ -2,11 +2,36 @@
 \section{Introduction}
 \vspace{-0.05in}
 \label{sec:intro}
-Existing datacenters are based on a server-centric architecture, where a small amount of the resources needed for computing tasks (CPU, memory, storage, interconnects) are tightly coupled within a single server. While the server-centric architecture has been a tremendous success, recent industry trends suggest a paradigm shift --- a {\em disaggregated} data center (\dis) architecture that comprises of a pool of resources, each built as a standalone resource blade, interconnected via a datacenter-wide network fabric. Examples abound already --- Intel RSA~\cite{rsa}, HP ``the machine''~\cite{hptm}, Facebook's disaggregated rack~\cite{fdr}, and SeaMicro~\cite{seamicro}, as well as research prototypes like Firebox~\cite{firebox} and soNUMA~\cite{sonuma}.
+Existing datacenters are based on a server-centric architecture, where a small amount of the various resources needed for computing tasks (CPU, memory, storage) are tightly integrated within a single server. While server-centric architectures have been the mainstay for decades, recent efforts suggest a paradigm shift: a {\em disaggregated} datacenter (\dis) that is architected as a pool of decoupled resources, with each resource type built as a standalone resource blade, interconnected via a unified network fabric as shown in Figure~\ref{fig:dc}. In such a datacenter, the aggregation of resources needed by a job is then logical (allocated by a software scheduler) rather than physical (dictated by hardware).
 
-Resource disaggregation is beneficial along several dimensions. First, disaggregation makes computing hardware more modular, enabling the technology for each individual resource to evolve independently. Indeed, as new technologies evolve or need for specialized computing needs arise, physically decoupling the resources alleviates the burdensome process of integration, server factor form planning, and motherboard designs. Second, resource disaggregation also provides a fine-grained control over provisioning, sharing and efficiently utilizing individual resources. Finally, resource disaggregation allows overcoming the technology barriers (imbalance between memory and CPU capacity, power dissipation issues, etc), potentially enabling new technological advances. 
+Multiple small-scale prototypes of disaggregated hardware exist already --- Intel RSA~\cite{rsa}, HP ``the machine''~\cite{hptm}, Facebook's disaggregated rack~\cite{fdr}, and SeaMicro~\cite{seamicro}, as well as research prototypes like Firebox~\cite{firebox}, soNUMA~\cite{sonuma}, and disaggregated memory blades~\cite{ddcHwDesign1}.
 
-While resource disaggregation offers aforementioned benefits, it delegates a number of scalability challenges to the underlying network fabric. Indeed, the low-latency high-bandwidth inter-resource communication that used to be contained within a server is now spread across the network fabric. This not only increases the load on the network but makes low latency communication critical. The network will, thus, be one of the key enabling or blocking factors to resource disaggregation. 
+\begin{figure*}[!t]
+\centering 
+\subfigure[Current datacenter] {
+\includegraphics[width=3.05in]{img/DC_before_4.pdf}
+\label{fig:dc_before}
+}
+\hfill
+\subfigure[Disaggregated datacenter] {
+\includegraphics[width=3.05in]{img/DC_after_2.pdf}
+\label{fig:dc_after}
+}
+\tightcaption{Architectural differences between server-centric and resource-centric datacenters}
+\label{fig:dc}
+\end{figure*}
+
+
+
+
+Resource disaggregation stands to benefit both hardware developers and datacenter operators. %is beneficial along several dimensions. 
+For hardware vendors, disaggregation makes computing hardware more modular and hence 
+easier to build and evolve. 
+An ongoing challenge for hardware architects is that technologies for CPUs, memory, storage, etc. have very different cost, performance, and power scaling trends and this constrains their integration. For example, architects have warned of an impending `memory capacity wall' because of which co-locating compute and memory in a single server will not be sustainable~\cite{ddcHwDesign1}. 
+Similarly, as new technologies or specialized computing needs arise~\cite{memristors,nvram,reg-ex-hardware,gpus}, having standalone per-resource blades avoids the burdensome process of redoing the process of integration, motherboard design, and server factor form planning. Disaggregation offers similar benefits to operators, giving them finer-grained control over how they  provision, upgrade, and schedule individual resources.
+%Finally, resource disaggregation allows overcoming the technology barriers (imbalance between memory and CPU capacity, power dissipation issues, etc), potentially enabling new technological advances. 
+
+While disaggregation offers the above benefits, it introduces new challenges for the underlying network fabric. The inter-resource communication that used to be contained within a server is now spread across the network fabric. This not only increases the load on the network but makes low latency communication critical. The network will, thus, be one of the key enabling or blocking factors to resource disaggregation. 
 
 Unfortunately, the network support required for resource disaggregation is, at best, poorly understood. The existing deployments of disaggregated datacenters are either small scale or proprietary, with few details available publicly~\cite{rsa, hptm, fdr, seamicro}.
 
