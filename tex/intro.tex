@@ -31,22 +31,28 @@ An ongoing challenge for hardware architects is that technologies for CPUs, memo
 Similarly, as new technologies or specialized computing needs arise~\cite{memristors,nvram,reg-ex-hardware,gpus}, having standalone per-resource blades avoids the burdensome process of redoing the process of integration, motherboard design, and server factor form planning. Disaggregation offers similar benefits to operators, giving them finer-grained control over how they  provision, upgrade, and schedule individual resources.
 %Finally, resource disaggregation allows overcoming the technology barriers (imbalance between memory and CPU capacity, power dissipation issues, etc), potentially enabling new technological advances. 
 
-While disaggregation offers the above benefits, it introduces new challenges for the underlying network fabric. The inter-resource communication that used to be contained within a server is now spread across the network fabric. This not only increases the load on the network but makes low latency communication critical. The network will, thus, be one of the key enabling or blocking factors to resource disaggregation. 
+While disaggregation offers the above benefits, it introduces new challenges for the underlying network fabric. Today's server platforms offer high bandwidth and low latency communication between different resources within the server (see Table~\ref{tab:tech}). However, with disaggregation, some of the inter-resource communication that used to be contained within a server is now spread across the network fabric. This not only increases the load on the network but makes low latency communication critical. The network will, thus, be a key enabling or limiting factor in realizing resource disaggregation. 
+Despite the central role that the network plays in \dis, there has been little systematic evaluation of the requirements or feasibility of scaling networks for disaggregation. Instead, existing prototypes of disaggregated platforms have been small scale and/or proprietary~\cite{rsa, hptm, fdr, seamicro}. 
 
-Unfortunately, the network support required for resource disaggregation is, at best, poorly understood. The existing deployments of disaggregated datacenters are either small scale or proprietary, with few details available publicly~\cite{rsa, hptm, fdr, seamicro}.
+This paper takes a first step towards understanding what network support is required for resource disaggregation. 
+Rather than approach the question from a clean-slate, we adopt a workload-driven approach: we take five diverse workloads commonly found in today's datacenters -- batch processing jobs in Hadoop and Spark, point queries with Memcached~\cite{memcached} and ElasticSearch~\cite{elastic}, streaming applications using Storm~\cite{storm} -- and address three questions in the context of these workloads: 
+%through a combination of emulations and simulation: 
 
-This paper takes a step in building an understanding of the requirements and challenges in enabling network support for \dis. Our approach is workload-driven; we use five common, yet diverse, workloads including batch processing jobs from Hadoop and Spark, point queries from Memcached~\cite{memcached} and ElasticSearch~\cite{elastic} and streaming applications from Storm~\cite{storm}. Using these workloads, we aim to answer three questions through a combination of emulations and simulation: 
-
+\vspace{-0.5em}
 \begin{itemize}[leftmargin=*]
 	\itemsep0em
-		\item What support will be needed from the network, in terms of latency and bandwidth, to maintain the application-level performance within $10\%$ of server-centric architecture? \rc{$\gets$ a lot of people asked yesterday: why $10\%$?}
-	\item How will the network traffic change in DDC? What are the important design parameters that impact traffic patterns?
+	\item What network latency and bandwidth are required to avoid degrading application-level performance relative to server-centric architectures? 
+	\item How (and why) does disaggregation change network traffic characteristics such as flow size distributions, communication patterns, traffic volumes, burstiness, and so forth?
     \item Can existing transport protocols meet the above requirements? 
 \end{itemize}
 
 \noindent
-To date, there is no consensus on the granularity at which resource disaggregation will happen --- at the rack-scale, pod-scale, or an extreme of datacenter scale. Moreover, as briefly discussed above, resource disaggregation enables flexibility in choice of provisioning and sharing of resources adding to the degrees of freedom in design of \dis architecture. Given that our focus is on understanding the network support for \dis (rather than proposing a \dis architecture), we consider the new degrees of freedom --- scale of disaggregation, CPU-memory disaggregation, data placement and access, etc. --- as design parameters that may impact our study. Our key findings are:
 
+\cut{ 
+To date, there is no consensus on the granularity at which resource disaggregation will happen --- at the rack-scale, pod-scale, or an extreme of datacenter scale. Moreover, as briefly discussed above, resource disaggregation enables flexibility in choice of provisioning and sharing of resources adding to the degrees of freedom in design of \dis architecture. Given that our focus is on understanding the network support for \dis (rather than proposing a \dis architecture), we consider the new degrees of freedom --- scale of disaggregation, CPU-memory disaggregation, data placement and access, etc. --- as design parameters that may impact our study. 
+} 
+
+Our key findings are:
 \begin{itemize}[leftmargin=*]
 	\itemsep0em
 		\item To maintain the application-level performance within $10\%$ of current server-centric architecture, \dis will require a full-bisection bandwidth network with $40$Gbps bandwidth capacity, and an end-to-end latency of $5\mu$s, ignoring the optimizations that disaggregation enables. These requirements highlight the challenge: while $40$Gbps (or even $100$Gbps) is feasible with existing technology, the key to resource disaggregation is to achieve low end-to-end latency between resource blades. \rqc{Independent of the design parameters in DDC;} \rc{$\gets$ removed this sentence; it is not entirely true that this result is independent of design parameters; eg, this result depends on local cache size}
@@ -55,7 +61,9 @@ To date, there is no consensus on the granularity at which resource disaggregati
 \end{itemize}
 
 \noindent
-Given the relatively forward-looking nature of our study, several caveats apply to our observations. First, our results use workloads from applications designed for server-centric architectures. Our study is not comprehensive in existing workloads; besides, both the applications and the workloads may evolve alongside \dis architectures thus impacting  our results. Second, the focus of our study is on network support for \dis; to that end, we ignore several systems related challenges. It may very well turn out that the latter have a more profound impact on \dis architectures and applications. In this sense, one might view our study as an exploration of whether it is possible to avoid the network from becoming the bottleneck in \dis architectures. Finally, many aspects of the overall \dis context we consider do not exist yet. Consequently, we must make assumptions (\eg, resource blade organization, data layout, etc.). We make what we believe are sensible choices, state these choices explicitly and in many cases, explore the impact of the choices made on our results. However, our results are dependent on these choices and more experience is needed to confirm their validity.
+We note 
+Given the relatively forward-looking nature of our study, several caveats apply to our observations. 
+First, our results use workloads from applications designed for server-centric architectures. Our study is not comprehensive in existing workloads; besides, both the applications and the workloads may evolve alongside \dis architectures thus impacting  our results. Second, the focus of our study is on network support for \dis; to that end, we ignore several systems related challenges. It may very well turn out that the latter have a more profound impact on \dis architectures and applications. In this sense, one might view our study as an exploration of whether it is possible to avoid the network from becoming the bottleneck in \dis architectures. Finally, many aspects of the overall \dis context we consider do not exist yet. Consequently, we must make assumptions (\eg, resource blade organization, data layout, etc.). We make what we believe are sensible choices, state these choices explicitly and in many cases, explore the impact of the choices made on our results. However, our results are dependent on these choices and more experience is needed to confirm their validity.
 
 \cut{
 \noindent
