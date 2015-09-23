@@ -1,0 +1,14 @@
+\section{Sylvia's outlines}
+
+\subsection{Section 3}
+\sr{
+Outline: 
+\begin{itemize}
+\item we start by evaluating the basic latency and BW requirements that the network must provide in order to offer acceptable application performance. Start with methodology, then results, then implications. 
+\item Methodology: (1) we focus on the impact of disaggregating memory on application performance; ignore disk for now (say why), (2) approach: each blade sees the network as a pipe with constant latency and BW  and we inject parameters; this ignores the potential effects due to congestion but we'll capture these in the next two sections (including the effects of disk traffic hitting the net). 
+Gory details of how we measure.
+\item Clearly, biggest impact will come from amount of local memory available. So we start by evaluating the impact of that. Show graph. Conclude 30\% (25\%??). From here on, unless stated otherwise, we're running with 30\%
+\item Next, inject different combinations of latency and BW. Conclude 5 (or 5-10?) and 40. 
+\item Implications (\#1) BW not a problem; latency is non-trivial. Let's consider feasibility. 
+\item Feasibility of latency: `unavoidable' costs: tx delay and prop delay. Note that tx delay is non-trivial. Three implications of this: (\#2) can't afford any/much queueing delay (i.e., no congestion). Will return to evaluate the feasibilty of zero/low queueing delay in S5, and (\#3) Ignoring congestion, rack vs. dc-scale not such a big diff. Only alters the prop delay component. So perhaps dc-scale is OK. Finally, (\#4), a good reason to consider 100G (which is already available today at both switch ports and server NICs but not commonly deployed) is, not because we need the capacity, but to reduce (tx) latency. 
+\end{itemize}}
