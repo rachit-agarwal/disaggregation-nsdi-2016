@@ -4,11 +4,12 @@
 \label{sec:summary}
 
 The high-level idea behind a disaggregated datacenter is illustrated in Figure~\ref{fig:ddcIllustration}.
-A \dis comprises standalone hardware “blades” for each resource type including CPUs, memory, storage, and network interfaces as well as specialized components (GPUs, various ASIC accelerators, etc.). Those resource blades are interconnected by a unified network fabric. Understanding the specifications and nature of this network fabric is our focus in this paper.
+A \dis comprises standalone hardware “blades” for each resource type, %including CPUs, memory, storage, and network interfaces as well as specialized components (GPUs, various ASIC accelerators, etc.). Those resource blades are
+interconnected by a unified network fabric. Understanding the nature of this network fabric is our focus in this paper.
 However, before delving into network designs, we outline our assumptions regarding the hardware (\S\ref{ssec:hardware}) and system (\S\ref{ssec:system}) architecture in \dis. 
 
 
-\vspace{-0.1in}
+\vspace{-0.25in}
 \subsection{Hardware Architecture}
 \vspace{-0.05in}
 \label{ssec:hardware}
@@ -63,39 +64,39 @@ We note that while the implementation of such blades may require some additional
 \subsection{System Architecture}
 \vspace{-0.05in}
 \label{ssec:system}
-We now outline our assumptions regarding the system architecture in \dis. 
-In contrast to disaggregated hardware designs for which research prototypes exist, we have less to guide us on the systems front. We thus make the following assumptions, which we believe are reasonable: 
+%We now outline our assumptions regarding the system architecture in \dis. 
+In contrast to disaggregated hardware for which research prototypes exist, we have less to guide us on the systems front. We thus make the following assumptions, which we believe are reasonable: 
 
 
 \paragraphb{VM as an abstraction}
 In current datacenters, resource allocation and scheduling is centered around the abstraction of a VM: 
 operators provision VMs to aggregate slices of hardware resources within a server, and schedulers place jobs across VMs. 
-While not strictly necessary, we note that the VM model can still be useful in \dis. In particular, continuing with the abstraction of a VM will allow existing software infrastructure --- i.e., hypervisors, operating systems, datacenter middleware, and applications --- to be reused with little or no modification. Thus in this paper we assume that computational resources are still aggregated to form VMs, although now the resources assigned to a VM come from distributed hardware blades. Given a VM abstraction, we assign resources to VMs differently based on the assumptions we make regarding the scope of disaggregation: for rack-scale disaggregation, a VM is assigned resources from within a single rack while, for datacenter-scale disaggregation, a VM is assigned resources from anywhere in the datacenter.
+While not strictly necessary, we note that the VM model can still be useful in \dis. In particular, continuing with the abstraction of a VM will allow existing software infrastructure --- i.e., hypervisors, operating systems, datacenter middleware, and applications --- to be reused with little or no modification. Thus in this paper we assume that computational resources are still aggregated to form VMs, although now the resources assigned to a VM come from distributed hardware blades. Given a VM abstraction, we assign resources to VMs differently based on the \emph{scope} of disaggregation that we assume: for rack-scale disaggregation, a VM is assigned resources from within a single rack while, for datacenter-scale disaggregation, a VM is assigned resources from anywhere in the datacenter.
 
 
 \paragraphb{Hardware organization} 
 We assume that resources are organized in racks as in today's datacenters. 
 We assume a `mixed' organization in which each rack hosts a mix of different types of resource blades, as opposed to a `segregated' organization in which a rack is populated with a single type of resource (e.g., all memory blades). The rationale for a mixed organization is twofold. 
 First, it leads to a more uniform communication pattern which should simplify network design. 
-Second, a mixed organization permits optimizations that aim to localize communication; e.g., co-locating a VM within a rack which would not be possible with a segregated organization. 
-\sr{Rachit, let me know if its still confusing.}
+Second, a mixed organization permits optimizations that aim to localize communication; e.g., co-locating a VM within a rack, which would not be possible with a segregated organization. 
+\sr{clear?}
 %\rqc{(in some proportion that isn't important)} \rc{Shouldn't this go to the previous subsection?}
 
 %The scheduler allocates resources by assigning resource blades (or a part of), configuring the resultant resource and address space assignments at the selected blades, and configuring the network that interconnects these blades. Depending of the scale of disaggregation, each rack may contain different types of resource blades and the scheduler may optimize for locality when it allocates resources to a job. The best layout of resource blades and the corresponding scheduler optimizations is a topic for future exploration.
 
+\paragraphb{Page-level remote memory access}
+We assume that CPU blades access remote memory at the granularity of a page (4KB in x86). In traditional servers ,the typical memory access between CPU and DRAM occurs in the unit of a cache-line size (64B in x86); however, page-level access has been shown to better exploit spatial locality in common memory access patterns and hence amortizes the round-trip latency more effectively. In addition, page-level access requires little or no modification to the virtual memory subsystems of hypervisors or operating systems, and is completely transparent to user-level applications. We further assume that those remotely accessed pages are not shared by multiple VMs at a given time, in order to not introduce cache coherence traffic across the network.
 
-
-\paragraphb{Remote memory and disk access granularity}
-We assume that CPU blades access remote memory at the page granularity (4KB in x86) over the fabric. Typical memory access between CPU and DRAM in server-centric architecture occurs in the unit of cache-line size (64B in x86); however, we believe accessing memory at page granularity will be essential to better exploit spatial locality in common memory access patters and amortize the routing-trip latency more effectively. \rqc{In addition, page-level access requires little or no modification to the virtual memory subsystems of hypervisor or operating system, and it is completely transparent to user-level applications. We further assume that those remotely accessed pages are not shared by multiple VMs at a given time, in order to not introduce cache coherence traffic across the network.}
-
-\paragraphb{Distributed data placement}
-We assume that applications in \dis read and write large files at the granularity of ``blocks'', that are potentially distributed across multiple disk blades. This assumption is partially motivated by existing distributed file systems (\eg, HDFS) and enables both load balancing and simplified fault tolerance. % because this spreads load. We see no compelling reason to do otherwise (right?)
+\paragraphb{Block-level distributed data placement}
+We assume that applications in \dis read and write large files at the granularity of ``blocks'' (4KB in size) with consecutive blocks uniformly distributed across different disk blades. This assumption is partially motivated by existing distributed file systems (\eg, HDFS) and also enables better load balancing and fault tolerance. % because this spreads load. 
 
 \vspace{-0.1in}
 \subsection{Design knobs}
 \vspace{-0.05in}
 \label{ssec:knobs}
-The assumptions regarding hardware and software architecture in \dis leave us with two key system design choices that we treat as ``knobs'' in our study: {\em size of local cache on CPU blades} and {\em scale of disaggregation} (rack-, pod- or datacenter-scale). We explore how different possible configurations for these knobs impact the network requirements and traffic characteristics in \dis.
+Given the above assumptions, we are left with two key system design choices that we treat as ``knobs'' in our study: {\em the amount of local memory on compute blades} and  {\em the scope of disaggregation} (e.g., rack-, pod- or datacenter-scale). We will explore how varying these knobs impacts the network requirements and traffic characteristics in \dis.
+
+The remainder of this paper is organized as follows: we start by analyzing network  bandwidth and latency requirements (\S\ref{sec:requirements}), then study how disaggregation impacts network traffic characteristics (\S\ref{sec:workloads}), and the suitability of existing network protocols for disaggregated workloads and requirements (\S\ref{sec:existing}). We end with a discussion of related work and open questions (\S\ref{sec:discussion}).
 
 %--------------------------------------------------
 % END OF USEFUL STUFF

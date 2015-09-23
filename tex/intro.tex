@@ -17,7 +17,7 @@ Multiple small-scale prototypes of disaggregated hardware exist already --- Inte
 \includegraphics[width=3.05in]{img/DC_after_2.pdf}
 \label{fig:dc_after}
 }
-\tightcaption{Architectural differences between server-centric and resource-centric datacenters}
+\caption{Architectural differences between server-centric and resource-centric datacenters}
 \label{fig:dc}
 \end{figure*}
 
@@ -51,7 +51,7 @@ This paper takes a first step towards understanding what network support is requ
 
 \noindent {\bf (2) Traffic workloads:} How (and why) does disaggregation change network traffic characteristics such as flow size distributions, communication patterns, traffic volumes, burstiness, and so forth?
 
-\noindent {\bf (3) L3 and L4 protocol support:} Can existing (deployed or proposed) network designs meet the above requirements?
+\noindent {\bf (3) L3/L4 protocols:} Can existing (deployed or proposed) network designs meet the above requirements?
 
 
 \cut{ 
@@ -84,8 +84,8 @@ Taken together we view our results as encouraging in that they suggest that comm
         %\item Short memory-bound flows dominating the \dis traffic, combined with a more homogeneous spatial and temporal traffic distribution present favorable characteristics for existing transport protocols~\cite{pfabric} to meet \dis requirements. %However, depending on the design parameters, existing protocols may be subjected to new challenges namely, robustness across workloads and application-level policies on flow prioritization (\S\ref{sec:existing}).
 
 \noindent
-We note three limitations of our work. First, our results are based on five specific workloads; we leave to future work an  evaluation of whether our results generalize to other applications.%, including applications (re)written to exploit disaggregation. 
-Second, we focus primarily on questions of \emph{network} design for disaggregation, ignoring many systems-related questions (e.g., software stack or scheduler designs). However, the latter may well turn out to be the more critical bottleneck for disaggregation. In this sense, one might view our study as exploring whether the network can `get out of the way' (as is often advocated~\cite{greenberg-sigcomm15, vahdat-something}) even under disaggregation. Finally, our work looks ahead to an overall system  that does not yet exist and hence we must make assumptions on certain fronts (e.g., data layout, rack organization (\S\ref{ssec:system}). We make what we believe are sensible choices and state these choices explicitly.
+We note three limitations of our work. First, our results are based on five specific workloads; we leave to future work an  evaluation of whether our results generalize to other applications.%, including applications (re)written to exploit disaggregation.  
+ Second, we focus primarily on questions of network design for disaggregation, ignoring many systems-related questions (e.g., software stack or scheduler designs). However, the latter may well turn out to be the more critical bottleneck for disaggregation. In this sense, one might view our study as exploring whether the network can `get out of the way' (as often advocated~\cite{greenberg-sigcomm15, vahdat-something}) even under disaggregation. Finally, our work looks ahead to an overall system  that does not yet exist and hence we must make assumptions on certain fronts (e.g., data layout, rack organization). We make what we believe are sensible choices and state these choices explicitly  (\S\ref{ssec:system}).
 %: not for layout or rack org?, and in many cases, explore how these choices impact our results. 
 Nonetheless, our results are dependent on these choices and more experience is needed to confirm their validity.
 
