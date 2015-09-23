@@ -1,24 +1,57 @@
-\section{\dis Network Performance Requirements}
+\section{\dis Network Requirements}
 \label{sec:requirements}
+We start by evaluating the latency and bandwidth requirements from the network such that the application-level performance in \dis is comparable to that in server-centric architectures. Overall, our results show that:
 
-Outline: 
-\begin{itemize}
-\item we start by evaluating the basic latency and BW requirements that the network must provide in order to offer acceptable application performance. Start with methodology, then results, then implications. 
-\item Methodology: (1) we focus on the impact of disaggregating memory on application performance; ignore disk for now (say why), (2) approach: each blade sees the network as a pipe with constant latency and BW  and we inject parameters; this ignores the potential effects due to congestion but we'll capture these in the next two sections (including the effects of disk traffic hitting the net). 
-Gory details of how we measure.
-\item Clearly, biggest impact will come from amount of local memory available. So we start by evaluating the impact of that. Show graph. Conclude 30\% (25\%??). From here on, unless stated otherwise, we're running with 30\%
-\item Next, inject different combinations of latency and BW. Conclude 5 (or 5-10?) and 40. 
-\item Implications (\#1) BW not a problem; latency is non-trivial. Let's consider feasibility. 
-\item Feasibility of latency: `unavoidable' costs: tx delay and prop delay. Note that tx delay is non-trivial. Three implications of this: (\#2) can't afford any/much queueing delay (i.e., no congestion). Will return to evaluate the feasibilty of zero/low queueing delay in S5, and (\#3) Ignoring congestion, rack vs. dc-scale not such a big diff. Only alters the prop delay component. So perhaps dc-scale is OK. Finally, (\#4), a good reason to consider 100G (which is already available today at both switch ports and server NICs but not commonly deployed) is, not because we need the capacity, but to reduce (tx) latency. 
+\begin{itemize}[leftmargin=*]
+	\itemsep0em
+	\item CPU blades having local cache is necessary to ensure reasonable performance, given the increased latency to access remote memory. However, $25\%$ of main memory serving as local cache suffices.
+	\item Applications require non-trivial latency performance ($5$--$10\mu$s) from the network. In contrast, $40$Gbps access link capacity suffices. Moreover, a good reason to consider higher link capacity is not to handle higher traffic volume, but to reduce the transmission time at the end-hosts.  
+    \item Ignoring congestion, the scale of disaggregation (rack versus datacenter scale) has little impact on application-level performance. \rc{$\gets$ right now, we have this results in S5 using simulations for rack and datacenter scale disagg; how should we inject latencies to make this point?}
 \end{itemize}
 
-In this section, we explore the second question: what support do applications in \dis require from the network, in terms of bandwidth and latency, to maintain the performance observed in existing \pdis? We start by describing the methodology used to explore this question (\S\ref{ssec:rmethod}), discuss the requirements (\S\ref{ssec:rr}) and discuss how current technology trends are favorable towards achieving these requirements (\S\ref{ssec:rtt}).
+\noindent
+We start by describing our evaluation methodology (\S\ref{ssec:rmethod}), discuss our results (\S\ref{ssec:rr}) and finally outline a number of implications of our findings (\S\ref{ssec:rtt}). 
 
+%
+\begin{figure*}
+
+  \centering
+  \subfigure{
+    \includegraphics[height = 1.5in]{img/vary_latency_bw.eps}  
+  }
+%\hspace{0.05in}
+  \subfigure{
+    \includegraphics[height = 1.5in]{img/vary_latency_bw_spark.eps}
+  }
+  \caption{\small{\rqc{The main figure for varying latency and bandwidth. One bar graph, one set of bars for each application; one bar for each configuration.}}}
+  \label{fig:latb}
+\end{figure*}
+%
 \subsection{Methodology}
 \label{ssec:rmethod}
-For memory accesses, there are two main sources of performance penalty. First, software overhead for trap and page eviction. Depending on the page eviction algorithm used, existing research prototypes report this per-page overhead to be roughly in the range of $2$--$6\mu$s. However, it is expected that this overhead can be reduced to sub-microseconds with faster CPUs and software optimization, making this overhead insignificant. The second source of performance penalty is the page transfer time over the network. In comparison to the first overhead, the network transfer times could be significant. We, thus, focus on the second overhead, by looking into the performance requirements of the network to support remote memory access, without introducing significant performance penalty.
+Resource disaggregation can impact application-level performance due to increased latency for main memory accesses and for disk accesses.
 
-We use the SIT, described in \S\ref{sec:workloads}, to emulate remote memory access. Specifically, SIT implements a special swap device (backed by physical memory rather than a disk) allowing us to inject artificial delays to emulate network round-trip latency and bandwidth for each paging operation. We measure relative performance on the basis of throughput or request completion time as compared to the zero-delay case. \rc{Talk about the limitations --- does not take into account OS overhead, and end-to-end network delays.}
+For memory accesses, there are two main sources of performance penalty. First, software overhead for trap and page eviction. Depending on the page eviction algorithm used, existing research prototypes report this per-page overhead to be roughly in the range of $2$--$6\mu$s~\cite{x1, x2, x3}. However, this overhead can be reduced to sub-microseconds with faster CPUs and software optimization~\cite{y1, y2, y3}, making this overhead insignificant. The second source of performance penalty is the page transfer time over the network. We focus on the second overhead since, in comparison to the first overhead, the network transfer times could be significant. 
+
+Most applications today perform disk accesses at significantly coarser granularity than memory accesses (reading and writing of large data blocks). Most disk accesses, thus, constitute long flows and are bottlenecked is disk throughput capacity. Since network bandwidth is significantly larger than disk throughput capacity~\cite{z1, z2}, remote disk accesses in \dis are likely to continue to be bottlenecked by disk throughput (similar to server-centric architecture). Hence, we ignore the impact of increased latency for disk flows on application-level performance.
+
+\paragraphb{Emulating remote memory} 
+We emulate CPU-memory disaggregation using an in-house implementation of a light-weight special instrumentation tool (SIT) that runs atop existing servers. SIT implements a special swap device that is backed by physical memory rather than a disk. Specifically, the main memory is logically partitioned into ``local cache'' and ``remote memory'' (with a configurable fraction of main memory being the local cache). SIT intercepts all page faults, or memory access requests into the part of main memory identified as remote, and records the time and memory addresses accessed by the application. Given our assumption of remote memory access granularity being a page size, the accessed memory addresses are translated into page-level requests (number of pages requested). 
+
+SIT intercepting all ``remote memory'' flows allows us to inject artificial delays to emulate resource disaggregation. We inject delays due to:
+
+\begin{itemize}[leftmargin=*]
+	\itemsep0em
+	\item Network end-to-end latency, which is fixed for all requests. We vary end-to-end latency across experiments.
+	\item Transmission time for requests, which depends both on the access link bandwidth as well as number of pages accessed in the request. For a given request, we insert (\#pages $\times$ page-size)/(bandwidth) amount of latency.
+\end{itemize}
+
+\noindent
+Using the above methodology, each blade essentially experiences a disaggregated network with a constant end-to-end latency, and a fixed transmission time for a given request. The above methodology captures the queueing delays due to congestion in the network within the network latency; however, the potential effects due to congestion may be different across requests. We capture these effects in the next two sections (including the effects of disk traffic in the network).
+
+\paragraphb{Applications}
+\rc{We need to say something about generality of applications}
+%We measure relative performance on the basis of throughput or request completion time as compared to the zero-delay case.
 
 %
 \begin{table}
@@ -43,6 +76,7 @@ We use the SIT, described in \S\ref{sec:workloads}, to emulate remote memory acc
 \end{table}
 
 %
+\cut{
 \begin{figure}
 	\centering
 	\begin{tikzpicture}[xscale=0.6, yscale=0.35]
@@ -79,33 +113,20 @@ We use the SIT, described in \S\ref{sec:workloads}, to emulate remote memory acc
 	\end{tikzpicture}
 	    \caption{\small{We run real-world applications on a $5$-node Amazon EC2 cluster. To emulate end-to-end network latency, we inject artificial latencies for all ``remote memory'' and ``remote disk'' accesses and measure the impact of this latency to the application-level performance. \rc{SIT representation imprecise}}}
 	\label{fig:system1}
-\end{figure}
+\end{figure}}
 %
 \subsection{Requirements}
 \label{ssec:rr}
 
-%
-\begin{figure*}
-
-  \centering
-  \subfigure{
-    \includegraphics[height = 1.5in]{img/vary_latency_bw.eps}  
-  }
-%\hspace{0.05in}
-  \subfigure{
-    \includegraphics[height = 1.5in]{img/vary_latency_bw_spark.eps}
-  }
-  \caption{\small{\rqc{The main figure for varying latency and bandwidth. One bar graph, one set of bars for each application; one bar for each configuration.}}}
-  \label{fig:latb}
-\end{figure*}
-%
 Figure~\ref{fig:latb} shows the application layer performance for six different combinations of network bandwidth and latency configurations. These results, as earlier, were obtained by setting the local cache to be $30\%$ of the working memory of each application. We discuss the results in-depth below. 
+
+\paragraphb{$25\%$ local cache is sufficient}
 
 \paragraphb{$40$Gbps, $5\mu$s is sufficient}
 We start by observing that given a network with $40$Gbps access link bandwidth, and end-to-end delay of $5\mu$s, the application-level performance in \dis can be brought down to within $5\%$ of that in \pdis. While $100$Gbps network bandwidth does not provide significant benefits over the $40$Gbps case, reducing the latency down to $1\mu$s can lead to applications observing essentially no performance degradation. In the hindsight, this is not surprising given our results from \S\ref{sec:workloads}, where we established that the network traffic volume does not increase significantly in \dis compared to \pdis, and that the network flows are dominated by short (latency-sensitive) memory access flows. \rc{$\gets$ needs more concrete intuition; remote memory faster than local disk; applications heavily pipelined; CPU bottleneck?}
 
-\paragraphb{Benefits of remote memory}
-First, given sufficient network bandwidth and small network latencies, use of remote memory can drastically improve application performance compared to traditional disk-based swap. Since the working set size is hard to predict in advance, memory tends to be highly over-provisioned in datacenter servers to prevent thrashing. Disaggregated remote memory can reduce this waste by providing an elastic memory capacity pooled at the datacenter scale. 
+%\paragraphb{Benefits of remote memory}
+%First, given sufficient network bandwidth and small network latencies, use of remote memory can drastically improve application performance compared to traditional disk-based swap. Since the working set size is hard to predict in advance, memory tends to be highly over-provisioned in datacenter servers to prevent thrashing. Disaggregated remote memory can reduce this waste by providing an elastic memory capacity pooled at the datacenter scale. 
 
 %
 \begin{figure}
@@ -138,8 +159,19 @@ Second, low latency is more important than high bandwidth. The $100$Gbps bandwid
 %
 
 
-\subsection{Technology trends}
+\subsection{Implications}
 \label{ssec:rtt}
+\sr{
+Outline: 
+\begin{itemize}
+\item we start by evaluating the basic latency and BW requirements that the network must provide in order to offer acceptable application performance. Start with methodology, then results, then implications. 
+\item Methodology: (1) we focus on the impact of disaggregating memory on application performance; ignore disk for now (say why), (2) approach: each blade sees the network as a pipe with constant latency and BW  and we inject parameters; this ignores the potential effects due to congestion but we'll capture these in the next two sections (including the effects of disk traffic hitting the net). 
+Gory details of how we measure.
+\item Clearly, biggest impact will come from amount of local memory available. So we start by evaluating the impact of that. Show graph. Conclude 30\% (25\%??). From here on, unless stated otherwise, we're running with 30\%
+\item Next, inject different combinations of latency and BW. Conclude 5 (or 5-10?) and 40. 
+\item Implications (\#1) BW not a problem; latency is non-trivial. Let's consider feasibility. 
+\item Feasibility of latency: `unavoidable' costs: tx delay and prop delay. Note that tx delay is non-trivial. Three implications of this: (\#2) can't afford any/much queueing delay (i.e., no congestion). Will return to evaluate the feasibilty of zero/low queueing delay in S5, and (\#3) Ignoring congestion, rack vs. dc-scale not such a big diff. Only alters the prop delay component. So perhaps dc-scale is OK. Finally, (\#4), a good reason to consider 100G (which is already available today at both switch ports and server NICs but not commonly deployed) is, not because we need the capacity, but to reduce (tx) latency. 
+\end{itemize}}
 
 \begin{itemize}
 	\item Implications? Why are current technology trends favorable?
