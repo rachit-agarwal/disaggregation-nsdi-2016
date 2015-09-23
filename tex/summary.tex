@@ -3,7 +3,7 @@
 \vspace{-0.05in}
 \label{sec:summary}
 
-The high-level idea behind a disaggregated datacenter is illustrated in Figure~\ref{fig:ddcIllustration}.
+The high-level idea behind a disaggregated datacenter is illustrated in Figure~\ref{fig:dc}.
 A \dis comprises standalone hardware “blades” for each resource type, %including CPUs, memory, storage, and network interfaces as well as specialized components (GPUs, various ASIC accelerators, etc.). Those resource blades are
 interconnected by a unified network fabric. Understanding the nature of this network fabric is our focus in this paper.
 However, before delving into network designs, we outline our assumptions regarding the hardware (\S\ref{ssec:hardware}) and system (\S\ref{ssec:system}) architecture in \dis. 
@@ -35,7 +35,7 @@ As proposed in previous work~\cite{ddcHwDesign1}, we assume that each CPU blade 
 \paragraphb{Virtualizing resources}
 Each resource blade must support virtualization of its resources. 
 We thus assume that each memory blade has a controller ASIC (or a lightweight processor) that implements address translation between a remote CPU's view of its address space and the addressing used internally within a blade, as described in~\cite{ddcHwDesign1}.
-For I/O blades: many I/O device controllers now support virtualization via PCIe SR-IOV or MR-IOV features and the same can be leveraged to virtualize I/O in \dis. \sr{need citations for features}
+For IO blades: many IO device controllers now support virtualization via PCIe SR-IOV or MR-IOV features and the same can be leveraged to virtualize IO resources in \dis. \sr{need citations for features}
 We note that while the implementation of such blades may require some additional new hardware, it requires no change to existing components such as CPUs, memory modules, or storage devices themselves.
 
 
@@ -43,21 +43,21 @@ We note that while the implementation of such blades may require some additional
 
 %
 \begin{table}
-	\centering
-	\caption{\small{Typical latency and peak bandwidth requirements within a traditional server. Numbers vary between hardware.}}
-	\label{tab:tech}
-	\vspace{0.1in}
+  \centering
+  \small
   \begin{tabular}{l|c|c}
-	  \hline
-		\textbf{Communication} & \textbf{Latency} & \textbf{Bandwidth}\\
-		\textbf{type} & \textbf{(ns)} & \textbf{(Gbps)}\\\hline \hline
-    CPU -- CPU & $10$ & $200$\\\hline
-    CPU -- Memory & $20$ & $300$\\\hline
-    CPU -- $10$G NIC & $10^3$ & $10$\\\hline
+		\textbf{Communication} & \textbf{Latency (ns)} & \textbf{Bandwidth (Gbps)}\\\hline
+	\hline
+    CPU -- CPU & $10$ & $500$\\\hline
+    CPU -- Memory & $20$ & $500$\\\hline
+    CPU -- $40$G NIC & $10^3$ & $40$\\\hline
     CPU -- Disk (SSD) & $10^4$ & $5$\\\hline
     CPU -- Disk (HDD) & $10^6$ & $1$\\\hline
     \hline
-\end{tabular}
+  \end{tabular}
+  \vspace{0.1in}
+  \caption{\small{Typical latency and peak bandwidth requirements within a traditional server. Numbers vary between hardware.}}
+  \label{tab:tech}
 \end{table}
 %
 \vspace{-0.1in}
@@ -65,7 +65,7 @@ We note that while the implementation of such blades may require some additional
 \vspace{-0.05in}
 \label{ssec:system}
 %We now outline our assumptions regarding the system architecture in \dis. 
-In contrast to disaggregated hardware for which research prototypes exist, we have less to guide us on the systems front. We thus make the following assumptions, which we believe are reasonable: 
+In contrast to our assumptions regarding hardware which we based on existing  prototypes, we have less to guide us on the systems front. We thus make the following assumptions, which we believe are reasonable: 
 
 
 \paragraphb{VM as an abstraction}
@@ -79,16 +79,16 @@ We assume that resources are organized in racks as in today's datacenters.
 We assume a `mixed' organization in which each rack hosts a mix of different types of resource blades, as opposed to a `segregated' organization in which a rack is populated with a single type of resource (e.g., all memory blades). The rationale for a mixed organization is twofold. 
 First, it leads to a more uniform communication pattern which should simplify network design. 
 Second, a mixed organization permits optimizations that aim to localize communication; e.g., co-locating a VM within a rack, which would not be possible with a segregated organization. 
-\sr{clear?}
+%\sr{clear?}\sh{to me yes, but should be in \S\ref{ssec:hardware}?}
 %\rqc{(in some proportion that isn't important)} \rc{Shouldn't this go to the previous subsection?}
 
 %The scheduler allocates resources by assigning resource blades (or a part of), configuring the resultant resource and address space assignments at the selected blades, and configuring the network that interconnects these blades. Depending of the scale of disaggregation, each rack may contain different types of resource blades and the scheduler may optimize for locality when it allocates resources to a job. The best layout of resource blades and the corresponding scheduler optimizations is a topic for future exploration.
 
 \paragraphb{Page-level remote memory access}
-We assume that CPU blades access remote memory at the granularity of a page (4KB in x86). In traditional servers ,the typical memory access between CPU and DRAM occurs in the unit of a cache-line size (64B in x86); however, page-level access has been shown to better exploit spatial locality in common memory access patterns and hence amortizes the round-trip latency more effectively. In addition, page-level access requires little or no modification to the virtual memory subsystems of hypervisors or operating systems, and is completely transparent to user-level applications. We further assume that those remotely accessed pages are not shared by multiple VMs at a given time, in order to not introduce cache coherence traffic across the network.
+We assume that CPU blades access remote memory at the granularity of a page (4KB in x86). In traditional servers , the typical memory access between CPU and DRAM occurs in the unit of a cache-line size (64B in x86); however, page-level access has been shown to better exploit spatial locality in common memory access patterns and hence amortizes the round-trip latency more effectively in the context of \dis ~\cite{ddcHwDesign1}. In addition, page-level access requires little or no modification to the virtual memory subsystems of hypervisors or operating systems, and is completely transparent to user-level applications. We further assume that those remotely accessed pages are not shared by multiple VMs at a given time, in order to not introduce cache coherence traffic across the network.
 
 \paragraphb{Block-level distributed data placement}
-We assume that applications in \dis read and write large files at the granularity of ``blocks'' (4KB in size) with consecutive blocks uniformly distributed across different disk blades. This assumption is partially motivated by existing distributed file systems (\eg, HDFS) and also enables better load balancing and fault tolerance. % because this spreads load. 
+We assume that applications in \dis read and write large files at the granularity of ``blocks'' (again 4KB in x86, as most OSes have the same block size as pages) with consecutive blocks uniformly distributed across different disk blades. This assumption is partially motivated by existing distributed file systems (\eg, HDFS) and also enables better load balancing and fault tolerance. % because this spreads load. 
 
 \vspace{-0.1in}
 \subsection{Design knobs}

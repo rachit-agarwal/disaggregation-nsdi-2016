@@ -10,12 +10,12 @@ Multiple small-scale prototypes of disaggregated hardware exist already --- Inte
 \centering 
 \subfigure[Current datacenter] {
 \includegraphics[width=3.05in]{img/DC_before_4.pdf}
-\label{fig:dc_before}
+\label{subfig:dc_before}
 }
 \hfill
 \subfigure[Disaggregated datacenter] {
 \includegraphics[width=3.05in]{img/DC_after_2.pdf}
-\label{fig:dc_after}
+\label{subfig:dc_after}
 }
 \caption{Architectural differences between server-centric and resource-centric datacenters}
 \label{fig:dc}
@@ -63,16 +63,16 @@ To date, there is no consensus on the granularity at which resource disaggregati
 \noindent Our key findings are as follows:
 \vspace{-0.5em}
 \begin{itemize}[leftmargin=*]
-	\itemsep0em
-		\item To maintain application performance comparable to current datacenters, a disaggregated datacenter must provide at least $40$Gbps bandwidth to end-points and an end-to-end latency of no more than $5\mu$s.
-		\item Traffic workloads in a disaggregated datacenter will differ significantly from existing workloads. Specifically, we observe: (a) \sr{quantify? e.g. X-times?} more homogeneous spatial and temporal distribution of traffic; (b) a \sr{X} lower skew in flow size distributions with a long flows, and (c) a \sr{X} increase in overall traffic volume, with a \sr{Z} more uniform distribution of bytes between short {\em vs.} long flows.
-		\item We evaluate four transport protocols -- TCP, pFabric~\cite{pfabric}, pHost~\cite{phost}, and  FastPass~\cite{fastpass} -- for their ability to provide low end-to-end latencies with \dis workloads and find that, while pFabric and pHost can meet \dis requirements, FastPass and TCP fail to do so. 
-		\item \sr{TODO: let's discuss} scale: surprisingly, not an important factor; primary factors are the app's memory access pattern and bandwidth.
-		\end{itemize} 
+\itemsep0em
+	\item To maintain application performance comparable to current datacenters, a disaggregated datacenter must provide at least $40$Gbps bandwidth to end-points and an end-to-end latency of no more than $5\mu$s.
+	\item Traffic workloads in a disaggregated datacenter will differ significantly from existing workloads. Specifically, we observe: (a) \sr{quantify? e.g. X-times?} more homogeneous spatial and temporal distribution of traffic; (b) a \sr{X} lower skew in flow size distributions with a long flows, and (c) a \sr{X} increase in overall traffic volume, with a \sr{Z} more uniform distribution of bytes between short {\em vs.} long flows.
+	\item We evaluate four transport protocols -- TCP, pFabric~\cite{pfabric}, pHost~\cite{phost}, and  FastPass~\cite{fastpass} -- for their ability to provide low end-to-end latencies with \dis workloads and find that, while pFabric and pHost can meet \dis requirements, FastPass and TCP fail to do so. 
+	\item \sr{TODO: let's discuss} scale: surprisingly, not an important factor; primary factors are the app's memory access pattern and bandwidth.
+\end{itemize} 
 	
-	
+\noindent	
 %	We discuss how the above findings inform future research in \S\ref{sec:workloads}.
-Taken together we view our results as encouraging in that they suggest that commodity networking technology and existing design practices -- e.g., Ethernet links, droptail and priority switching, end-to-end reliability, etc. -- are within reach of meeting the needs of \dis. This finding is in contrast to early prototypes of disaggregated platforms (from the hardware community) that build new network fabrics often resembling intra-server interconnects; e.g., with Torus  topologies~\cite{sea-micro}, new link types~\cite{intel-si-photonics}, per-hop reliability, etc. \sr{check!!} Thus we hope our results lead to a broader exploration of the network requirements for \dis.
+Taken together we view our results as encouraging in that they suggest that commodity networking technologies and existing design practices -- e.g., Ethernet links, droptail and priority switching, end-to-end reliability, etc. -- are within reach of meeting the needs of \dis. This finding is in contrast to early prototypes of disaggregated platforms (from the hardware community) that build new network fabrics often resembling intra-server interconnects; e.g., with Torus  topologies~\cite{seamicro}, new link types~\cite{intel-si-photonics}, per-hop reliability, etc. \sr{check!!} Thus we hope our results lead to a broader exploration of the network requirements for \dis.
 	
 	\cut{
 	%SR: cut because intro was too long. 
@@ -83,9 +83,8 @@ Taken together we view our results as encouraging in that they suggest that comm
 	}
         %\item Short memory-bound flows dominating the \dis traffic, combined with a more homogeneous spatial and temporal traffic distribution present favorable characteristics for existing transport protocols~\cite{pfabric} to meet \dis requirements. %However, depending on the design parameters, existing protocols may be subjected to new challenges namely, robustness across workloads and application-level policies on flow prioritization (\S\ref{sec:existing}).
 
-\noindent
-We note three limitations of our work. First, our results are based on five specific workloads; we leave to future work an  evaluation of whether our results generalize to other applications.%, including applications (re)written to exploit disaggregation.  
- Second, we focus primarily on questions of network design for disaggregation, ignoring many systems-related questions (e.g., software stack or scheduler designs). However, the latter may well turn out to be the more critical bottleneck for disaggregation. In this sense, one might view our study as exploring whether the network can `get out of the way' (as often advocated~\cite{greenberg-sigcomm15, vahdat-something}) even under disaggregation. Finally, our work looks ahead to an overall system  that does not yet exist and hence we must make assumptions on certain fronts (e.g., data layout, rack organization). We make what we believe are sensible choices and state these choices explicitly  (\S\ref{ssec:system}).
+We note three limitations of our work. First, our results are based on five specific workloads; we leave to future work an evaluation of whether our results generalize to other applications. %, including applications (re)written to exploit disaggregation.  
+Second, we focus primarily on questions of network design for disaggregation, ignoring many systems-related questions (e.g., scheduler designs or software stack). However, the latter may well turn out to be the more critical bottleneck for disaggregation. In this sense, one might view our study as exploring whether the network can `get out of the way' (as often advocated~\cite{greenberg-sigcomm15, vahdat-something}) even under disaggregation. Finally, our work looks ahead to an overall system that does not yet exist and hence we must make assumptions on certain fronts (e.g., data layout, rack organization). We make what we believe are sensible choices and state these choices explicitly in \S\ref{ssec:system} \sh{not \S\ref{sec:summary}?}.
 %: not for layout or rack org?, and in many cases, explore how these choices impact our results. 
 Nonetheless, our results are dependent on these choices and more experience is needed to confirm their validity.
 
