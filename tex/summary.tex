@@ -2,25 +2,43 @@
 \section{Disaggregated Datacenters}
 \vspace{-0.05in}
 \label{sec:summary}
-In this section, we outline the assumptions made in our study regarding hardware (\S\ref{ssec:hardware}) and system (\S\ref{ssec:system}) architecture in \dis. \rqc{The high-level idea behind a disaggregated datacenter is illustrated in Figure~\ref{fig:ddcIllustration}.}
+
+The high-level idea behind a disaggregated datacenter is illustrated in Figure~\ref{fig:ddcIllustration}.
+A \dis comprises standalone hardware “blades” for each resource type including CPUs, memory, storage, and network interfaces as well as specialized components (GPUs, various ASIC accelerators, etc.). Those resource blades are interconnected by a unified network fabric. Understanding the specifications and nature of this network fabric is our focus in this paper.
+However, before delving into network designs, we outline our assumptions regarding the hardware (\S\ref{ssec:hardware}) and system (\S\ref{ssec:system}) architecture in \dis. 
+
 
 \vspace{-0.1in}
-\subsection{Hardware in \dis}
+\subsection{Hardware Architecture}
 \vspace{-0.05in}
 \label{ssec:hardware}
-We make the same set of assumptions regarding hardware design in \dis as in previous studies~\cite{ddcHwDesign1, ddcHwDesign2, ddcHwDesign3}. These assumptions typically reflect the existing hardware prototypes to date, in industry~\cite{rsa, hptm, fdr} and in research~\cite{sonuma, firebox}. We refer the reader to \cite{ddcHwDesign1, ddcHwDesign2, ddcHwDesign3} for an in-depth discussion of hardware designs for disaggregated blades. The assumptions are as follows.
+The hardware design we assume for \dis follows that of previous studies and prototypes~\cite{ddcHwDesign1, ddcHwDesign2, ddcHwDesign3, rsa, hptm, fdr, sonuma, firebox}. We summarize these here and refer the reader to~\cite{ddcHwDesign1, ddcHwDesign2, ddcHwDesign3} for detailed hardware designs.% for disaggregated blades. 
 
-\paragraphb{Each resource built as a standalone blade}
-Each resource type --- CPU, memory, storage, network interfaces as well as specialized components (GPUs, various ASIC accelerators, etc.) --- is developed as a standalone hardware ``blade''. Each resource blade has a network interface to the datacenter-wide network fabric.
 
-\paragraphb{Cache coherence domain is limited to single CPU blade}
-The CPU-to-CPU traffic is not spread across the network fabric by localizing computations within a single CPU blade; this may be reasonable for many applications given that latest CPUs already have $8$--$16$ cores. Alternatively, akin to servers today, a single CPU blade may house multiple CPU sockets to contain CPU-to-CPU traffic within the blade{\footnote{In this case, a smart scheduler could make scheduling decisions while taking such locality into account.}}. The rationale is that the CPU-to-CPU traffic in server-centric architectures requires end-to-end latency and bandwidth that is unlikely to be offered by the network fabrics (see Table~\ref{tab:tech}).
+\paragraphb{Standalone per-resource blades}
+With some simplification, we can view each blade as comprised of the resource component in question with a direct interface to the network fabric. 
+One exception to this strict decoupling are compute blades. Since memory access from CPUs must run at very high speed (see Table~\ref{tab:tech}), each compute blade is assumed to retain some amount of \emph{local} memory that acts as a cache for remote memory~\cite{ddcHwDesign1, ddcHwDesign2}. Thus, disaggregating memory can be viewed as expanding the memory hierarchy to include a remote level. While remote memory may be allocated to any CPU in the datacenter, local memory is dedicated to its co-located CPU. We evaluate how local memory impacts performance in~\S\ref{sec:requirements}. 
+%is necessary to ensure reasonable performance given the increased latency to access remote memory.
 
+
+\paragraphb{Cache coherence domain is limited to a single compute blade}
+As we elaborate on below, we assume that the abstraction of a Virtual Machine (VM) is retained in \dis and that, similar to today, each VM is limited to a single compute blade (which may house one or more CPU `sockets'). This has the important implication that cache coherence domains are constrained to 
+a single physical blade and hence CPU-to-CPU cache coherence traffic does not hit the network fabric.
+This assumption is necessary because an external network fabric is unlikely to support the latency and bandwidth requirements for inter-CPU cache coherence (Table~\ref{tab:tech}).
+
+\cut{
 \paragraphb{Each CPU blade hosts a small local cache}
 As proposed in previous work~\cite{ddcHwDesign1}, we assume that each CPU blade retains a small amount of local memory (rather than completely disaggregating the memory) that acts as a cache for remote memory. While remote memory may be allocated to any CPU in the datacenter, local memory is dedicated to its co-located CPUs. \rqc{As we shall see, the assumption of local memory is necessary to ensure reasonable performance given the increased latency to access remote memory.}
+}
 
-\paragraphb{Memory and I/O blades}
-We assume that each memory blade has a controller ASIC (or a lightweight processor) that implements address translation between the remote CPU's view of its address space and the addressing used internally within a blade{\footnote{\rc{We should comment on metadata management here}}}. Many I/O device controllers are beginning to support virtualization via the PCIe SR-IOV or MR-IOV features, which can be leveraged in \dis. 
+\paragraphb{Virtualizing resources}
+Each resource blade must support virtualization of its resources. 
+We thus assume that each memory blade has a controller ASIC (or a lightweight processor) that implements address translation between a remote CPU's view of its address space and the addressing used internally within a blade, as described in~\cite{ddcHwDesign1}.
+For I/O blades: many I/O device controllers now support virtualization via PCIe SR-IOV or MR-IOV features and the same can be leveraged to virtualize I/O in \dis. \sr{need citations for features}
+We note that while the implementation of such blades may require some additional new hardware, it requires no change to existing components such as CPUs, memory modules, or storage devices themselves.
+
+
+%{\footnote{\sr{WHY?\rc{We should comment on metadata management here}}}}. 
 
 %
 \begin{table}
@@ -42,18 +60,31 @@ We assume that each memory blade has a controller ASIC (or a lightweight process
 \end{table}
 %
 \vspace{-0.1in}
-\subsection{System architecture}
+\subsection{System Architecture}
 \vspace{-0.05in}
 \label{ssec:system}
-We now outline the assumptions made in our study regarding the system architecture in \dis. Unlike the hardware-related assumptions, we have less to guide us on this front. We believe the following assumptions to be most reasonable:
+We now outline our assumptions regarding the system architecture in \dis. 
+In contrast to disaggregated hardware designs for which research prototypes exist, we have less to guide us on the systems front. We thus make the following assumptions, which we believe are reasonable: 
+
 
 \paragraphb{VM as an abstraction}
-The resource allocation and scheduling model in server-centric architecture is centered around virtual machines (VMs). In \dis, we do not need to restrict the resource allocation and scheduling model to VM-oriented architecture. We discuss how disaggregation enables new usage models in \S\ref{sec:discussion}. However, the VM model can still be useful to leverage the existing software infrastructure as well as running existing applications with little or no modification. As it is unclear how the resource allocation and scheduling will evolve in \dis, we assume in this paper that resources are still utilized by aggregating them to form VMs, while each resource is now physically disaggregated across the datacenter.
+In current datacenters, resource allocation and scheduling is centered around the abstraction of a VM: 
+operators provision VMs to aggregate slices of hardware resources within a server, and schedulers place jobs across VMs. 
+While not strictly necessary, we note that the VM model can still be useful in \dis. In particular, continuing with the abstraction of a VM will allow existing software infrastructure --- i.e., hypervisors, operating systems, datacenter middleware, and applications --- to be reused with little or no modification. Thus in this paper we assume that computational resources are still aggregated to form VMs, although now the resources assigned to a VM come from distributed hardware blades. Given a VM abstraction, we assign resources to VMs differently based on the assumptions we make regarding the scope of disaggregation: for rack-scale disaggregation, a VM is assigned resources from within a single rack while, for datacenter-scale disaggregation, a VM is assigned resources from anywhere in the datacenter.
 
-\paragraphb{Hardware organization}
-We assume that resource blades are organized along racks, as in today's datacenters. Each rack hosts a mix of different types of resource blades, rather than a single resource type (say, all disk blades or CPU blades). The rationale is that such an organization leads to a more uniform architecture, thus simplifying the network design \rc{$\gets$ I didn't quite understand this argument; and this one $\to$}. Moreover, the above assumption allows hardware organization to be independent of scope of disaggregation, requiring only the scheduler to be changed to support different scopes. \rqc{(in some proportion that isn't important)} \rc{Shouldn't this go to the previous subsection?}
+
+\paragraphb{Hardware organization} 
+We assume that resources are organized in racks as in today's datacenters. 
+We assume a `mixed' organization in which each rack hosts a mix of different types of resource blades, as opposed to a `segregated' organization in which a rack is populated with a single type of resource (e.g., all memory blades). The rationale for a mixed organization is twofold. 
+First, it leads to a more uniform communication pattern which should simplify network design. 
+Second, a mixed organization permits optimizations that aim to localize communication; e.g., co-locating a VM within a rack which would not be possible with a segregated organization. 
+\sr{Rachit, let me know if its still confusing.}
+%\rqc{(in some proportion that isn't important)} \rc{Shouldn't this go to the previous subsection?}
 
 %The scheduler allocates resources by assigning resource blades (or a part of), configuring the resultant resource and address space assignments at the selected blades, and configuring the network that interconnects these blades. Depending of the scale of disaggregation, each rack may contain different types of resource blades and the scheduler may optimize for locality when it allocates resources to a job. The best layout of resource blades and the corresponding scheduler optimizations is a topic for future exploration.
+
+
+
 \paragraphb{Remote memory and disk access granularity}
 We assume that CPU blades access remote memory at the page granularity (4KB in x86) over the fabric. Typical memory access between CPU and DRAM in server-centric architecture occurs in the unit of cache-line size (64B in x86); however, we believe accessing memory at page granularity will be essential to better exploit spatial locality in common memory access patters and amortize the routing-trip latency more effectively. \rqc{In addition, page-level access requires little or no modification to the virtual memory subsystems of hypervisor or operating system, and it is completely transparent to user-level applications. We further assume that those remotely accessed pages are not shared by multiple VMs at a given time, in order to not introduce cache coherence traffic across the network.}
 
