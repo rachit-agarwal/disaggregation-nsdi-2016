@@ -16,7 +16,7 @@ At each individual server, we capture two types of traffic. First, application-l
 \begin{figure*}
   \centering
   \subfigure[Flow size distribution (\dis)]{
-    \includegraphics[width = 2in]{img/graph1_sizedist_dis} 
+    \includegraphics[width = 2.1in]{img/graph1_sizedist_dis} 
 	\label{fig:fsd}
   }
 %\hspace{0.05in}
@@ -25,11 +25,11 @@ At each individual server, we capture two types of traffic. First, application-l
 	\label{fig:nof}
   }
   \subfigure[Temporal traffic distribution (\dis)]{
-    \includegraphics[width = 2in]{img/graph7_temporaltraffic_dis_terasort}
+    \includegraphics[width = 2.1in]{img/graph7_temporaltraffic_dis_terasort}
 	\label{fig:ttd}
   }  
   \subfigure[Flow size distribution (\pdis)]{
-    \includegraphics[width = 2in]{img/graph1_sizedist_pdis}
+    \includegraphics[width = 2.1in]{img/graph1_sizedist_pdis}
 	\label{fig:fsdp}
   }
   \subfigure[Traffic volume in \dis and \pdis]{
@@ -37,7 +37,7 @@ At each individual server, we capture two types of traffic. First, application-l
 	\label{fig:tv}
   }  
   \subfigure[Temporal traffic distribution (\pdis)]{
-    \includegraphics[width = 2in]{img/graph7_temporaltraffic_pdis_terasort}
+    \includegraphics[width = 2.1in]{img/graph7_temporaltraffic_pdis_terasort}
 	\label{fig:ttdp}
   }  
   \caption{\small{Flow and network traffic characteristics in \dis. Note that the x-axis is log-scaled for (a) and (d); the y-axis is log-scaled for all figures. \rc{Traffic volume is for terasort application}}}
@@ -62,37 +62,35 @@ We discuss the traffic characteristics in \dis, and contrast them against the tr
 \paragraphb{Flow Sizes and number of flows} 
 Figure~\ref{fig:fsd} and Figure~\ref{fig:fsdp} show the flow size distribution for \dis and for existing datacenters. Note that the flow size distribution for existing datacenters closely resembles the distribution observed in previous studies~\cite{srikanth, theo}. We observe that, in a sharp contrast to current datacenters, the flow sizes in \dis are concentrated in a small range [4KB, 40MB] --- two orders of magnitude smaller for the long flow sizes in current datacenters. Intuitively, two factors contribute to the differences. First, as outlined in \S\ref{ssec:rmethod}, the granularity of remote traffic in \dis is eith a page size ($4$KB) or a disk block size ($4$KB) leading to lack of short flows. Second, distributed data placement in \dis (\S\ref{ssec:rmethod}) distributes long flows along multiple CPU-disk blade pairs, reducing the tail in flow size distribution.
 
-Figure~\ref{fig:nof} shows that the number of flows in \dis increases by $3$--$4$ orders of magnitude compared to server-centric datacenters (except for memcached, discussed below). This is not surprising since the disk and memory flows that are contained within a single server in existing datacenters are not injected into the network fabric. The case of memcached is rather interesting since the number of flows in \dis decreases when compared to server-centric datacenters. Indeed, in a five server cluster running memcached in current datacenters, every one out of five client requests are going to be injected into the network (since the desired data is cached on a remote server). In \dis with $25\%$ local cache, CPU blades can respond to $25\%$ of the requests locally and only $75\%$ of the requests are going to be injected into the network.
+Figure~\ref{fig:nof} shows that the number of flows in \dis increases by $3$--$4$ orders of magnitude compared to server-centric datacenters (except for memcached, discussed below). This is not surprising since the disk and memory flows that are contained within a single server in existing datacenters are not injected into the network fabric. The case of memcached is rather interesting since the number of flows in \dis decreases when compared to server-centric datacenters. Indeed, in a five server cluster running memcached in current datacenters, every one out of five client requests are going to be injected into the network (since the desired data is cached on a remote server). In \dis with $25\%$ local cache, CPU blades can respond to $25\%$ of the requests locally and only $75\%$ of the requests are going to be injected into the network. \rc{$\gets$ I got confused while writing this argument; probably unncessarily. Will come back later}
 
-found that while in \pdis each request will result in a network flow, in \dis some requests are serviced by the local memory cache without crossing the network. This phenomenon is discussed further in~\S\ref{sssec:tfvol}.
+Given that the application execution time in \dis remains comparable to that in current server-centric architectures (\S\ref{sec:requirements}) and the number of flows increase by orders of magnitude, the inter-flow arrival times in \dis are going to be orders of magnitude smaller than in server-centric datacenters. Smaller inter-arrival times combined with concentration of flows within a smaller flow size range ($4$KB flows dominating the flow size distribution for many applications) have the following implication in protocol design for \dis:
 
-%Second, across all the applications we evaluated, the flow size distribution is dominated by memory traffic (4KB flows) and at least $60\%$ of the flows are less than $100$KB. 
+\paragraphb{Implication \#5:} Centralized global flow schedulers may face new challenges both in scalability and in meeting \dis application performance goals.
 
- results to discuss:
-\begin{itemize}
-\item The flow size distribution in \dis is more homogeneous --- that is, compared to \pdis, flows are distributed over a smaller range. \rc{flow sizes concentrated within a smaller range}
-\item For most applications, both the number of flows and the overall traffic volume in \dis are greater than the number of flows in \pdis. \rqc{\#flows increase by 3-4 orders of magnitude, but volume only by 2}
-\item \rqc{handling the increased traffic volume does not require 2 orders of magnitude more bandwidth --- peak traffic volume does not change}
-\item \rqc{rather non-intuitively, applications executing in-memory point queries require fewer flows and volume} 
-\item While in \pdis the traffic volume is spread over all source-destination pairs, in \dis a number of such pairs have no traffic between them --- that is, the traffic matrix changes from all-to-all to some-to-some.
-\item \rqc{stuff from yet-to-be-written 4.4}
-\end{itemize}
-%
+\vspace{0.1in}
+\noindent
+We return to evaluating the above in \S\ref{sec:existing}. Next, we discuss network traffic volume in \dis.
 
-\paragraphb{Traffic volume}
+\paragraphb{Traffic volume and temporal distribution}
 \label{sssec:fctv}
+Figure~\ref{fig:tv} compares the traffic volume in \dis against server-centric datacenters. We observe that, as expected, the traffic volume increases significantly in \dis due to several local memory and disk accesses in server-centric architectures being injected into the network. What may be surprising at the first glance, however, that increase in traffic volume is not proportional to the increase in number of flows. This is because most of the ``new'' flows in \dis are $4$KB memory flows that have very little contribution to the overall traffic volume. Note that memcached traffic volume reduces by almost $25\%$, precisely due to the effect that leads to reduction in number of flows.
 
+Figure~\ref{fig:ttd} and Figure~\ref{fig:ttdp} show the temporal traffic distribution in \dis and in existing datacenters. We make two interesting observations. First, unlike server-centric datacenters, traffic in \dis is more uniformly distributed across time, with little or no traffic bursts. This is because of an interesting effect caused by the data placement discussed in \S\ref{sec:summary}. In particular, the data placement in \dis allows a long memory or disk read to be spread across multiple smaller flows spanning several memory or disk blades. Intuitively, this has an affect akin to the task packing problem, where having multiple smaller tasks has a better packing compared to a single long task. That is, dividing a single long flow into multiple smaller flows ``packs'' into the network more efficiently, making traffic less bursty.
 
-\rc{This section along with figure 8 are slated for removal because we cannot count remote memory flows.}
-Next, we study the flow arrival times in \dis. Figure~\ref{fig:fat} shows the flow arrival time distribution for the six applications from Table~\ref{tab:workloads}. We make two interesting observations. First, the flow arrival time distribution is essentially independent of the application. This is because memory access traffic dominates all the applications, leading to similar flow arrival time distribution. Second, the flow arrival time distribution is significantly different from Poisson distribution, a commonly accepted approximation to workloads in \pdis. \rc{We should say something about inter-flow arrival times --- too small? not too small? any significant different compared to \pdis?}
+Second, while the traffic volume in \dis is two to three orders of magnitude larger than in server-centric datacenters, the peak traffic does not change. This observation has the following implication:
 
-Figure~\ref{fig:fat} also shows the flow arrival time distribution in \pdis. As observed in several previous studies~\cite{srikanth, theo}, the distribution is very close to Poisson distribution providing a second order support to our evaluation methodology. In comparison to \pdis, the distribution is significantly different in \dis as discussed above.
+\paragraphb{Implication \#6:} Increase in \dis network bandwidth capacity is likely to be guided by reduction in end-to-end network latency requirements rather than peak traffic volume.
 
-We start with studying the traffic volume in \dis and \pdis (see Figure~\ref{fig:vol}). For most applications studied, the traffic volume in \dis increases due to the same reason the number of flows increases (shown in Figure~\ref{fig:nof}) --- intuitively, flows that previously were contained within a server are now carried over the network.
+% \vspace{0.1in}
+% \noindent
+% While resource disaggreation does not require increase in network bandwidth capacity to handle increased traffic volume, the increase in bandwidth can be beneficial on other fronts (\eg, reducing end-to-end network latency, as dicussed in \S\ref{ssec:rtt}).
 
-Just as memcached exhibits a greater number of flows in \pdis, its traffic volume is greater in \dis. Our experiments with 25\% of memory in the local cache, so we expect that approximately this amount of request traffic in memcached will be served from the local cache in \dis and avoid the network entirely. Accordingly, we observe that the difference in traffic volume between \dis and \pdis is 24\%. The difference in the number of flows is more drastic because the flow distributions are different --- while memcached in \pdis has a bimodal distribution of request and response flows of approximate size 30 bytes and 10KB respectively, in \dis the distribution varies in the range [4KB, 19MB]. The longer tail in flow sizes for \dis causes the drastic disparity in number of flows seen in Figure~\ref{fig:nof} despite a relatively modest increase in traffic volume.
+\paragraphb{Spatial traffic distribution}
+\rc{need to discuss this}
+We now study the spatial distribution of traffic in \dis (see Figure~\ref{fig:sd}). Note that all traffic represented in Figure~\ref{fig:sdds} has a CPU as either its source or destination. This is a consequence of our assumption as discussed in \S~\ref{sec:summary} that CPUs do not share memory or disk resources. One could however imagine alternate models in which not all traffic is CPU-based. For example, disk accesses could be sent to the CPU that requested them while simultaneously being cached in remote memory. We leave an exploration of this design space to future work.
 
-% We note that the traffic volume in \dis is not much larger than in \pdis. At the first glance, this may seem rather surprising given the increase in traffic due to intra-server traffic becoming remote. However, note that memory accesses are just $4$KB in size; thus, a significantly large number of memory access traffic will correspond to a single long flow. Moreover, reads and writes that are local are only increased by a factor of $2\times$.
+Also note that there are slightly more traffic volume to the first memory blades than to memory blades farther rightwards and upwards in the heatmap. Digging deeper, we found that lower memory addresses were more popular in the application shown, terasort\footnote{results for other applications are in Appendix ~\ref{sec:appendix}}. As a result, the memory blade that lower addresses were mapped to in our range hashing experienced a greater traffic volume from CPUs. This suggests that depending on the application's data access patterns, a different address mapping may be needed. \rqc{say that: While in \pdis the traffic volume is spread over all source-destination pairs, in \dis a number of such pairs have no traffic between them --- that is, the traffic matrix changes from all-to-all to some-to-some.}
 
 \begin{figure}[t]
   \centering
@@ -111,18 +109,43 @@ Just as memcached exhibits a greater number of flows in \pdis, its traffic volum
   \label{fig:sd}
 \end{figure}
 %
-\paragraphb{Temporal and Spatial distribution}
-We now study the spatial distribution of traffic in \dis (see Figure~\ref{fig:sd}). Note that all traffic represented in Figure~\ref{fig:sdds} has a CPU as either its source or destination. This is a consequence of our assumption as discussed in \S~\ref{sec:summary} that CPUs do not share memory or disk resources. One could however imagine alternate models in which not all traffic is CPU-based. For example, disk accesses could be sent to the CPU that requested them while simultaneously being cached in remote memory. We leave an exploration of this design space to future work.
-
-Also note that there are slightly more traffic volume to the first memory blades than to memory blades farther rightwards and upwards in the heatmap. Digging deeper, we found that lower memory addresses were more popular in the application shown, terasort\footnote{results for other applications are in Appendix ~\ref{sec:appendix}}. As a result, the memory blade that lower addresses were mapped to in our range hashing experienced a greater traffic volume from CPUs. This suggests that depending on the application's data access patterns, a different address mapping may be needed.
-%First, when compared to \pdis, the traffic in \dis is significantly well distributed across the source-destination pairs. Indeed, the \dis architecture allows distributing a single read/write traffic across multiple nodes spatially distributed across the network. Second, the overall spatial distribution in \dis has significantly lower temperature than in \pdis, implying that on an average, each source-destination pair observes significantly lower traffic volume in \dis when compared to \pdis.
-
-Finally, we study the temporal distribution of traffic in \dis and \pdis. Figure~\ref{fig:td} shows that, when compared to \pdis, the traffic distribution in \dis is significantly less bursty. This is because of an interesting effect caused by the data placement discussed in \S\ref{sec:summary}. When a long flow in \pdis is divided across multiple smaller flows in \dis (due to data placement across multiple disks), it is pipelined into multiple shorter flows. Akin to the task packing problem, where having multiple smaller tasks has a better packing compared to a single long task, dividing a single flow into multiple smaller flows ``packs'' into the network more efficiently, making traffic less bursty.
-
 \subsection{Implications}
 \label{ssec:knobs}
-
+\rc{I don't think we'll have results for these, right?}
 We now study how various design parameters in \dis architecture design impact the observations made in this section. 
+
+\paragraphb{Impact of disaggregation scale}
+
+\paragraphb{Impact of data placement}
+
+%---------------
+%END OF USEFUL STUFF
+%---------------
+
+% Just as memcached exhibits a greater number of flows in \pdis, its traffic volume is greater in \dis. Our experiments with 25\% of memory in the local cache, so we expect that approximately this amount of request traffic in memcached will be served from the local cache in \dis and avoid the network entirely. Accordingly, we observe that the difference in traffic volume between \dis and \pdis is 24\%. The difference in the number of flows is more drastic because the flow distributions are different --- while memcached in \pdis has a bimodal distribution of request and response flows of approximate size 30 bytes and 10KB respectively, in \dis the distribution varies in the range [4KB, 19MB]. The longer tail in flow sizes for \dis causes the drastic disparity in number of flows seen in Figure~\ref{fig:nof} despite a relatively modest increase in traffic volume.
+
+%\rc{This section along with figure 8 are slated for removal because we cannot count remote memory flows.}
+%Next, we study the flow arrival times in \dis. Figure~\ref{fig:fat} shows the flow arrival time distribution for the six applications from Table~\ref{tab:workloads}. We make two interesting observations. First, the flow arrival time distribution is essentially independent of the application. This is because memory access traffic dominates all the applications, leading to similar flow arrival time distribution. Second, the flow arrival time distribution is significantly different from Poisson distribution, a commonly accepted approximation to workloads in \pdis. \rc{We should say something about inter-flow arrival times --- too small? not too small? any significant different compared to \pdis?}
+%
+%Figure~\ref{fig:fat} also shows the flow arrival time distribution in \pdis. As observed in several previous studies~\cite{srikanth, theo}, the distribution is very close to Poisson distribution providing a second order support to our evaluation methodology. In comparison to \pdis, the distribution is significantly different in \dis as discussed above.
+
+%Second, across all the applications we evaluated, the flow size distribution is dominated by memory traffic (4KB flows) and at least $60\%$ of the flows are less than $100$KB. 
+% 
+%  results to discuss:
+% \begin{itemize}
+% \item For most applications, both the number of flows and the overall traffic volume in \dis are greater than the number of flows in \pdis. \rqc{\#flows increase by 3-4 orders of magnitude, but volume only by 2}
+% \item \rqc{handling the increased traffic volume does not require 2 orders of magnitude more bandwidth --- peak traffic volume does not change}
+% \item \rqc{rather non-intuitively, applications executing in-memory point queries require fewer flows and volume} 
+% \item While in \pdis the traffic volume is spread over all source-destination pairs, in \dis a number of such pairs have no traffic between them --- that is, the traffic matrix changes from all-to-all to some-to-some.
+% \item \rqc{stuff from yet-to-be-written 4.4}
+% \end{itemize}
+%
+
+
+
+% We note that the traffic volume in \dis is not much larger than in \pdis. At the first glance, this may seem rather surprising given the increase in traffic due to intra-server traffic becoming remote. However, note that memory accesses are just $4$KB in size; thus, a significantly large number of memory access traffic will correspond to a single long flow. Moreover, reads and writes that are local are only increased by a factor of $2\times$.
+%
+%First, when compared to \pdis, the traffic in \dis is significantly well distributed across the source-destination pairs. Indeed, the \dis architecture allows distributing a single read/write traffic across multiple nodes spatially distributed across the network. Second, the overall spatial distribution in \dis has significantly lower temperature than in \pdis, implying that on an average, each source-destination pair observes significantly lower traffic volume in \dis when compared to \pdis.
 
 % \paragraphb{Impact of cache size} % discussed in section 3.
 %\begin{figure}[t]
@@ -137,34 +160,31 @@ We now study how various design parameters in \dis architecture design impact th
 %}
 %\caption{Flow count (above) and traffic volume (below) with varying fraction of memory in the local cache.}
 %\label{fig:rmem}
-%\end{figure}
+% %\end{figure}
 
-\paragraphb{Impact of remote versus local} 
-\rqc{Peter's graphs showing performance of local disk vs remote memory}
+% \paragraphb{Impact of remote versus local} 
+% \rqc{Peter's graphs showing performance of local disk vs remote memory}
 
-\rc{what do these mean?}
-    
-\paragraphb{Impact of disaggregation scale}
+% \rc{what do these mean?}
+ %   
+%
+% \subsubsection{Implications}
+% Our characterization of flows in \dis allows us to draw two conclusions. First, given that \dis traffic is dominated by latency-sensitive short flows and that the number of flows increases dramatically, centralized solutions to flow scheduling may not be practical. Such solutions, if deployed in \dis, would need to dramatically lower short-flow latency as well as be able to scale up to cope with larger numbers of flows. Second, future protocols should be designed with our flow characteristics in mind --- namely, protocols should not rely on the elephant-mice conjecture for performance, and should be able to handle a more homogeneous flow size distribution. \rqc{more implications?}
 
-\paragraphb{Impact of data placement}
-
-\subsubsection{Implications}
-Our characterization of flows in \dis allows us to draw two conclusions. First, given that \dis traffic is dominated by latency-sensitive short flows and that the number of flows increases dramatically, centralized solutions to flow scheduling may not be practical. Such solutions, if deployed in \dis, would need to dramatically lower short-flow latency as well as be able to scale up to cope with larger numbers of flows. Second, future protocols should be designed with our flow characteristics in mind --- namely, protocols should not rely on the elephant-mice conjecture for performance, and should be able to handle a more homogeneous flow size distribution. \rqc{more implications?}
-
-\begin{itemize}[leftmargin=*]
-	\itemsep0em
-	\item Traffic dominated by latency-sensitive short flows --- centralized flow schedulers may be inefficient
-	\item Number of flows increased --- centralized solutions may see more scalability issues
-	\item \rc{slated for removal} Flow arrival times too small --- centralized solutions inefficient
-	\item More homogeneity in flow sizes --- design of protocols
-	\item Traffic volume more uniformly distributed across short and long flows --- design of protocols
-\end{itemize}
+% \begin{itemize}[leftmargin=*]
+% 	\itemsep0em
+% 	\item Traffic dominated by latency-sensitive short flows --- centralized flow schedulers may be inefficient
+% 	\item Number of flows increased --- centralized solutions may see more scalability issues
+% 	\item \rc{slated for removal} Flow arrival times too small --- centralized solutions inefficient
+% 	\item More homogeneity in flow sizes --- design of protocols
+% 	\item Traffic volume more uniformly distributed across short and long flows --- design of protocols
+% \end{itemize}
 
 
-\subsubsection{Implications}
-\label{ssec:implications}
-\rc{Is this a valid implication?}
-Overall, while we observed in \S\ref{sec:requirements} that low latencies are important for performance, we observe here that high bandwidths are not necessary to serve the volume of traffic injected into the network. Rather, we envision networks in \ddc being provisioned to meet \emph{latency} requirements, and being overprovisioned from a peak traffic volume perspective as a result. \rqc{more implications?} 
+% \subsubsection{Implications}
+% \label{ssec:implications}
+% \rc{Is this a valid implication?}
+% Overall, while we observed in \S\ref{sec:requirements} that low latencies are important for performance, we observe here that high bandwidths are not necessary to serve the volume of traffic injected into the network. Rather, we envision networks in \dis being provisioned to meet \emph{latency} requirements, and being overprovisioned from a peak traffic volume perspective as a result. \rqc{more implications?} 
 
 %\begin{itemize}[leftmargin=*]
 %	\itemsep0em
