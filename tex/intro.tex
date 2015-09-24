@@ -26,7 +26,7 @@ Resource disaggregation stands to benefit both hardware developers and datacente
 For hardware developers, disaggregation makes hardware more modular and hence 
 easier to build and evolve. 
 For example, an ongoing challenge for hardware architects is that technologies for CPUs, memory, storage, etc. have very different cost, performance, and power scaling trends and this constrains their integration; e.g., architects have warned of an impending `memory capacity wall' making the co-location of compute and memory in a single server unsustainable~\cite{ddcHwDesign1}. 
-Similarly, as new needs or technologies arise\rc{~\cite{memristors,nvram,reg-ex-hardware,gpus}}, having standalone per-resource blades avoids the burdensome process of redoing the process of integration and motherboard design.
+Similarly, as new needs or technologies arise~\cite{memristors,nvram,reg-ex-hardware,gpus}, having standalone per-resource blades avoids the burdensome process of redoing the process of integration and motherboard design.
 %, and server factor form planning. 
 Disaggregation offers similar benefits to operators, as it enables finer-grained control over how they  provision, upgrade, and schedule individual resources.
 %Finally, resource disaggregation allows overcoming the technology barriers (imbalance between memory and CPU capacity, power dissipation issues, etc), potentially enabling new technological advances. 
@@ -73,7 +73,7 @@ To date, there is no consensus on the granularity at which resource disaggregati
 	
 \noindent	
 %	We discuss how the above findings inform future research in \S\ref{sec:workloads}.
-Taken together we view our results as encouraging in that they suggest that commodity networking technologies and existing design practices -- e.g., Ethernet links, droptail and priority switching, end-to-end reliability, etc. -- are within reach of meeting the needs of \dis. This finding is in contrast to early prototypes of disaggregated platforms (from the hardware community) that build new network fabrics often resembling intra-server interconnects; e.g., with Torus  topologies~\cite{seamicro}, new link types~\cite{intel-si-photonics}, per-hop reliability, etc. \sr{check!!} Thus we hope our results lead to a broader exploration of the network requirements for \dis.
+Taken together we view our results as encouraging in that they suggest that commodity networking technologies and existing design practices -- e.g., Ethernet links, droptail and priority switching, end-to-end reliability, etc. -- are within reach of meeting the needs of \dis. This finding is in contrast to early prototypes of disaggregated platforms (from the hardware community) that build new network fabrics often resembling intra-server interconnects; e.g., with Torus  topologies~\cite{seamicro}, new link types~\cite{intel-si-photonics}, per-hop reliability~\cite{infiniband}, etc. Thus we hope our results lead to a broader exploration of the network requirements for \dis.
 	
 	\cut{
 	%SR: cut because intro was too long. 

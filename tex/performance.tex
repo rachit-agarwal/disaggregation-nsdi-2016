@@ -109,7 +109,7 @@ Interestingly, TCP achieves better performance than Fastpass for many datapoints
 
 \subsection{Application-level performance}
 \label{ssec:alp}
-Figure~\ref{fig:appfabric} shows the application level slowdown after injecting latency into memory accesses. Overall, the application layer slowdown due to network-layer effects is limited to \rc{n} percent slower than assuming an infinitely fast network. 
+Figure~\ref{fig:appfabric} shows the application level slowdown after injecting latency into memory accesses when drawing network latency from the pFabric slowdown distribution in~\ref{seec:nlp}. Overall, the application layer slowdown due to network-layer effects is limited to a 9\% percent slowdown compared to an infinitely fast network. 
 
 \paragraphb{Level of Disaggregation} 
 Surprisingly, disaggregating resources at the datacenter scale did not incur much application layer penalty over rack scale disaggregation. The case with the greatest difference was wordcount, where datacenter- and rack-scale disaggregation incurred 9.1\% and 5\% application layer slowdown, respectively. This naturally follows from the results in Figures~\ref{fig:phostp-ds} and~\ref{fig:phostp-rs}; since the network layer performance is roughly equal across the two schemes, the application layer performance is as well. \rc{that last sentence sucks}
