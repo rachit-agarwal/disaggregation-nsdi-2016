@@ -47,32 +47,38 @@ At each individual server, we capture two types of traffic. First, application-l
 %
 \begin{figure*}
   \centering
+  \renewcommand{\thesubfigure}{(a)}
   \subfigure[Flow size distribution (\dis)]{
-    \includegraphics[width = 2.1in]{img/graph1_sizedist_dis} 
+    \includegraphics[width = 2in]{img/graph1_sizedist_dis} 
 	\label{fig:fsd}
   }
 %\hspace{0.05in}
+  \renewcommand{\thesubfigure}{(c)}
   \subfigure[\#Flow in \dis and \pdis]{
     \includegraphics[width = 2in]{img/graph2_numflows}
 	\label{fig:nof}
   }
+  \renewcommand{\thesubfigure}{(e)}
   \subfigure[Temporal traffic distribution (\dis)]{
-    \includegraphics[width = 2.1in]{img/graph7_temporaltraffic_dis_terasort}
+    \includegraphics[width = 2in]{img/graph7_temporaltraffic_dis_terasort}
 	\label{fig:ttd}
   }  
+  \renewcommand{\thesubfigure}{(b)}
   \subfigure[Flow size distribution (\pdis)]{
-    \includegraphics[width = 2.1in]{img/graph1_sizedist_pdis}
+    \includegraphics[width = 2in]{img/graph1_sizedist_pdis}
 	\label{fig:fsdp}
   }
+  \renewcommand{\thesubfigure}{(d)}
   \subfigure[Traffic volume in \dis and \pdis]{
     \includegraphics[width = 2in]{img/graph5_trafficvolume}
 	\label{fig:tv}
   }  
+  \renewcommand{\thesubfigure}{(f)}
   \subfigure[Temporal traffic distribution (\pdis)]{
-    \includegraphics[width = 2.1in]{img/graph7_temporaltraffic_pdis_terasort}
+    \includegraphics[width = 2in]{img/graph7_temporaltraffic_pdis_terasort}
 	\label{fig:ttdp}
   }  
-  \caption{\small{Flow and network traffic characteristics in \dis. Note that the x-axis is log-scaled for (a) and (d); the y-axis is log-scaled for all figures. \rc{Traffic volume is for terasort application}}}
+  \caption{\small{Flow and network traffic characteristics in \dis. Note that the x-axis is log-scaled for (a) and (d); the y-axis is log-scaled for all figures. \rc{Traffic volume is for terasort application} \rc{remove wordcount, rename wordcount-hadoop -> wordcount}}}
   \label{fig:traffic}
 \end{figure*}
 %
@@ -83,7 +89,7 @@ in a disaggregated cluster again involves two steps. First, we must
 define the resource blades that form our endpoints in the disaggregated cluster (i.e., map the resources in our server-based cluster into standalone blades in a disaggregated cluster) and then map the above traces to flows between these endpoints. 
 We assume one server maps to one compute blade and one memory blade but consolidate disk resources from different servers into a smaller number of disk blades so as to compensate for the relatively low throughput to disk (doing otherwise would only decrease our network load); specifically, we 
 assume that one server's disk resources map to $60\%$ of a standalone 
-disk blade.\footnote{We arrived at this number \sr{how??}.}
+disk blade.\footnote{We arrived at this number by aiming to balance network and disk throughputs while maintaining sufficient redundancy.} 
 
 Having defined our resource blades as above, we now define how traffic 
 flows between them. 
@@ -121,73 +127,81 @@ The above methodology provides us the amount of data accessed and the correspond
 We analyze the traffic characteristics in \dis, and contrast them against the traffic in existing server-centric datacenters. 
 We note that network designs have long been guided by measurements/models of traffic workloads and hence the characterization we undertake is of value in itself (i.e., beyond  just capturing the impact of congestion).
 
-\paragraphb{Flow Sizes and number of flows} 
-Figure~\ref{fig:fsd} and Figure~\ref{fig:tv} show the distribution of flow sizes with and without disaggregation respectively. We note first that the flow size distributions we observe without disaggregation closely matches the distributions reported in previous studies~\cite{srikanth, theo} validating our baseline test setup. 
+\paragraphb{Flow-level characteristics} We consider three metrics that characterize traffic at the flow level.
+
+\noindent \emph{(1) Flow sizes:} Figure~\ref{fig:fsd} and Figure~\ref{fig:fsdp} show the distribution of flow sizes with and without disaggregation respectively. We note first that the flow size distributions we observe without disaggregation closely matches the distributions reported in previous studies~\cite{srikanth, theo} validating our baseline test setup. 
 
 We observe that disaggregation dramatically reduces the range of flow sizes: flow sizes are concentrated within a smaller [4KB, 40MB] range and the largest flow sizes are almost two orders of magnitude smaller than in existing clusters.  Intuitively, two factors contribute to the differences. First, as outlined in \S\ref{ssec:rmethod}, the granularity of remote traffic in \dis is either a page size ($4$KB) or a disk block size ($4$KB) which leads to a lack of very short flows. Second, distributed data placement in \dis (\S\ref{ssec:rmethod}) distributes long flows along multiple CPU-disk blade pairs, reducing the tail in flow size distribution.
 
+\noindent \emph{(2) Number of flows:} 
 Figure~\ref{fig:nof} shows that the number of flows with and without disaggregation. We see that disaggregation increases the number of flows by $3$--$4$ orders of magnitude (except for memcached, discussed below). This is not surprising since disaggregation adds remote disk and memory accesses to the network. Interestingly, disaggregation \emph{decreases} the number of flows that memcached generates.
 %in a five server cluster running memcached, one out of five client requests is injected into the network (since the desired data is cached on a remote server). 
 This is because, in \dis, we fetch data from remote memory at the granularity of a page and cache the same locally and hence some lookups that, without disaggregation, manifested as requests to 
-remote servers are now served from the CPU's local memory.\sr{please check}
+remote servers are now served from the CPU's local memory.
 %with $25\%$ local cache, CPU blades can respond to $25\%$ of the requests locally and only $75\%$ of the requests are going to be injected into the network.
 %\rc{$\gets$ I got confused while writing this argument; probably unncessarily. Will come back later}
 
-Given that the application execution time in \dis remains comparable to that in current server-centric architectures (\S\ref{sec:requirements}) and the number of flows increase by orders of magnitude, the inter-flow arrival times in \dis are going to be orders of magnitude smaller than in server-centric datacenters. Smaller inter-arrival times combined with concentration of flows within a smaller flow size range ($4$KB flows dominating the flow size distribution for many applications) have the following implication in protocol design for \dis:
+\noindent \emph{(3) Flow inter-arrival times: } Because job completion times in \dis remain comparable to that in current server-centric architectures (\S\ref{sec:requirements}) but the number of flows increase by orders of magnitude, we can expect that inter-flow arrival times in \dis will be several orders of magnitude smaller than in server-centric datacenters. 
+%Smaller inter-arrival times combined with concentration of flows within a smaller flow size range ($4$KB flows dominating the flow size distribution for many applications) have the following implication in protocol design for \dis:
+This suggests that centralized flow schedulers~\cite{fastpass} and `reactive' network controllers (i.e., that react to each new flow arrival)~\cite{nox} will face new scaling challenges; we return to evaluate this in \S\ref{sec:existing}.
+%both in scalability and in meeting \dis application performance goals.
 
-\paragraphb{Implication \#5:} Centralized global flow schedulers may face new challenges both in scalability and in meeting \dis application performance goals.
-
-\vspace{0.1in}
-\noindent
-We return to evaluating the above in \S\ref{sec:existing}. Next, we discuss network traffic volume in \dis.
-
-\paragraphb{Traffic volume and temporal distribution}
+\paragraphb{Network-level traffic characteristics} 
 \label{sssec:fctv}
-Figure~\ref{fig:tv} compares the traffic volume in \dis against server-centric datacenters. We observe that, as expected, the traffic volume increases significantly in \dis due to several local memory and disk accesses in server-centric architectures being injected into the network. What may be surprising at the first glance, however, that increase in traffic volume is not proportional to the increase in number of flows. This is because most of the ``new'' flows in \dis are $4$KB memory flows that have very little contribution to the overall traffic volume. Note that memcached traffic volume reduces by almost $25\%$, precisely due to the effect that leads to reduction in number of flows.
+Next, we consider network-wide traffic volume and distributions.
 
-Figure~\ref{fig:ttd} and Figure~\ref{fig:ttdp} show the temporal traffic distribution in \dis and in existing datacenters. We make two interesting observations. First, unlike server-centric datacenters, traffic in \dis is more uniformly distributed across time, with little or no traffic bursts. This is because of an interesting effect caused by the data placement discussed in \S\ref{sec:summary}. In particular, the data placement in \dis allows a long memory or disk read to be spread across multiple smaller flows spanning several memory or disk blades. Intuitively, this has an affect akin to the task packing problem, where having multiple smaller tasks has a better packing compared to a single long task. That is, dividing a single long flow into multiple smaller flows ``packs'' into the network more efficiently, making traffic less bursty.
+\noindent \emph{(1) Total traffic volume:}
+Figure~\ref{fig:tv} compares the total traffic volume with and without disaggregation. As expected, traffic volume increases significantly in \dis due to (now) remote memory and disk accesses.
+While it may appear surprising that the increase in traffic volume is not proportional to the increase in number of flows, this is simply because most of the ``new'' flows are memory flows and these contribute few bytes (approx. 4KB/flow) to the overall traffic volume. 
+%that have very little contribution to the overall traffic volume.
+With memcached, the traffic volume drops by almost $25\%$ for the same reason described above. 
+%, precisely due to the effect that leads to reduction in number of flows.
 
-Second, while the traffic volume in \dis is two to three orders of magnitude larger than in server-centric datacenters, the peak traffic does not change. This observation has the following implication:
 
-\paragraphb{Implication \#6:} Increase in \dis network bandwidth capacity is likely to be guided by reduction in end-to-end network latency requirements rather than peak traffic volume.
+\noindent \emph{(2) Temporal traffic distribution:}
+Figure~\ref{fig:ttd} and Figure~\ref{fig:ttdp} show the temporal traffic distribution in \dis and in existing datacenters. We make two observations. 
+First, traffic in \dis is more uniformly distributed across time. This is to be expected as network traffic now results from memory and disk accesses which occur throughout the job's lifetime  
+as opposed to (for example) network traffic that is generated only during a specific 
+phase of a job's lifetime (e.g., the shuffle phase in a map-reduce job).
+
+%, with little or no traffic bursts. 
+%This is because of an interesting effect caused by the data placement discussed in \S\ref{sec:summary}. In particular, the data placement in \dis allows a long memory or disk read to be spread across multiple smaller flows spanning several memory or disk blades. Intuitively, this has an affect akin to the task packing problem, where having multiple smaller tasks has a better packing compared to a single long task. That is, dividing a single long flow into multiple smaller flows ``packs'' into the network more efficiently, making traffic less bursty.
+
+The second and perhaps more surprising observation is that, although the traffic volume in \dis is two to three orders of magnitude larger than in server-centric datacenters, the peak traffic does not change. 
+This suggests that, an increase in \dis network bandwidth capacity is more likely to be driven by the need to reduce end-to-end network latency (e.g., our conclusion in  \S\ref{sec:requirements} of a 40Gbps requirement) than to support higher peak traffic volumes.
 
 % \vspace{0.1in}
 % \noindent
 % While resource disaggreation does not require increase in network bandwidth capacity to handle increased traffic volume, the increase in bandwidth can be beneficial on other fronts (\eg, reducing end-to-end network latency, as dicussed in \S\ref{ssec:rtt}).
 
-\paragraphb{Spatial traffic distribution}
-\rc{need to discuss this}
-We now study the spatial distribution of traffic in \dis (see Figure~\ref{fig:sd}). Note that all traffic represented in Figure~\ref{fig:sdds} has a CPU as either its source or destination. This is a consequence of our assumption as discussed in \S~\ref{sec:summary} that CPUs do not share memory or disk resources. One could however imagine alternate models in which not all traffic is CPU-based. For example, disk accesses could be sent to the CPU that requested them while simultaneously being cached in remote memory. We leave an exploration of this design space to future work.
 
-Also note that there are slightly more traffic volume to the first memory blades than to memory blades farther rightwards and upwards in the heatmap. Digging deeper, we found that lower memory addresses were more popular in the application shown, terasort\footnote{results for other applications are in Appendix ~\ref{sec:appendix}}. As a result, the memory blade that lower addresses were mapped to in our range hashing experienced a greater traffic volume from CPUs. This suggests that depending on the application's data access patterns, a different address mapping may be needed. \rqc{say that: While in \pdis the traffic volume is spread over all source-destination pairs, in \dis a number of such pairs have no traffic between them --- that is, the traffic matrix changes from all-to-all to some-to-some.}
+\noindent \emph{(3) Spatial traffic distribution:}
+We plot the spatial distribution of traffic that results from disaggregation in Figure~\ref{fig:sd}. 
+We see that the communication pattern is highly non-uniform between pairs of endpoints which is to be expected since only CPU blades communicate with memory or disk blades (i.e., some endpoints 
+will never communicate). While this seems to suggest that uniform network designs based on (for example) fat-tree topologies that offer full bisection bandwidth between all endpoints are ill-suited to \dis, this is not the case because of our decision to mix different types of resource blades in each rack. This makes the non-uniformity we observe disappear when viewing the spatial distribution of communication at the rack level. 
+
+\paragraphb{Recap} In summary, we find that disaggregation leads to significantly altered traffic workloads, changing many long-held assumptions such as a high skew in flow-size distributions and the importance of `elephant' flows. In the following section, we test existing network designs on these new workloads.
+
+
+\cut{ 
+Also note   traffic volume to the first memory blades than to memory blades farther rightwards and upwards in the heatmap. Digging deeper, we found that lower memory addresses were more popular in the application shown, terasort\footnote{results for other applications are in Appendix ~\ref{sec:appendix}}. As a result, the memory blade that lower addresses were mapped to in our range hashing experienced a greater traffic volume from CPUs. This suggests that depending on the application's data access patterns, a different address mapping may be needed. \rqc{say that: While in \pdis the traffic volume is spread over all source-destination pairs, in \dis a number of such pairs have no traffic between them --- that is, the traffic matrix changes from all-to-all to some-to-some.}
+}
 
 \begin{figure}[t]
   \centering
-  \subfigure{
     \includegraphics[width = 2.3in]{img/graph6_trafficvolumeheatmap_dis_terasort} 
-	\label{fig:asdd}
-  }
+%	\label{fig:asdd}
 %\hspace{0.05in}
-  \subfigure{
-    \includegraphics[width = 2.3in]{img/graph6_trafficvolumeheatmap_pdis_terasort}
-	\label{fig:sdds}
+%  \subfigure{
+%    \includegraphics[width = 2.3in]{img/graph6_trafficvolumeheatmap_pdis_terasort}
+%	\label{fig:sdds}
   }
-  \caption{\small{Spatial traffic distribution in \pdis and \dis for the terasort application. The x-axis represents senders and the y-axis receivers. In \pdis above, this is a $5 \times 5$ matrix for the 5 ec2 machines, while in \dis below, the heatmap is a $13 \times 13$ matrix, for the 5 cpu blades, 5 memory blades, and 3 disk blades we map the 5 ec2 machines to. For further details on this mapping see \S\ref{ssec:method1}.}}
+  \caption{\small{Spatial traffic distribution in \dis for the terasort application. The x-axis represents senders and the y-axis receivers. The heatmap is a $13 \times 13$ matrix, for a `disaggregated' cluster with 5 cpu blades, 5 memory blades, and 3 disk blades.}}
   
   %A $n \times n$ matrix heat diagram, with cell $(i, j)$ having heat level corresponding to the traffic volume between source i and destination j. The same thing for \pdis.}}}
   \label{fig:sd}
 \end{figure}
-%
-\cut{
-\subsection{Implications}
-\label{ssec:knobs}
-\rc{I don't think we'll have results for these, right?}
-We now study how various design parameters in \dis architecture design impact the observations made in this section. 
 
-\paragraphb{Impact of disaggregation scale}
-
-\paragraphb{Impact of data placement}
-}
 %---------------
 %END OF USEFUL STUFF
 %---------------

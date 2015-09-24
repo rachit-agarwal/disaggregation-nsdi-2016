@@ -35,7 +35,7 @@ As proposed in previous work~\cite{ddcHwDesign1}, we assume that each CPU blade 
 \paragraphb{Virtualizing resources}
 Each resource blade must support virtualization of its resources. 
 We thus assume that each memory blade has a controller ASIC (or a lightweight processor) that implements address translation between a remote CPU's view of its address space and the addressing used internally within a blade, as described in~\cite{ddcHwDesign1}.
-For IO blades: many IO device controllers now support virtualization via PCIe SR-IOV~\cite{sriov} or MR-IOV features and the same can be leveraged to virtualize IO resources in \dis. \sr{need citations for features}
+For IO blades: many IO device controllers now support virtualization via PCIe SR-IOV or MR-IOV features~\cite{sriov} and the same can be leveraged to virtualize IO resources in \dis.
 We note that while the implementation of such blades may require some additional new hardware, it requires no change to existing components such as CPUs, memory modules, or storage devices themselves.
 
 

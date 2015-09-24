@@ -806,7 +806,8 @@
 
 @misc{fdr,
   title={Facebook Disaggregated Rack},
-  howpublished = "\url{http://newsroom.intel.com/community/intel_newsroom/blog/2013/01/16/intel-facebook-collaborate-on-future-data-center-rack-technologies}"
+  howpublished = "\url{http://goo.gl/6h2Ut}",
+  URL = {http://newsroom.intel.com/community/intel_newsroom/blog/2013/01/16/intel-facebook-collaborate-on-future-data-center-rack-technologies}
 }
 
 @inproceedings{sonuma,
@@ -877,10 +878,10 @@ title={A novel system architecture for web scale applications using lightweight 
 @inproceedings{hotnets,
  author = {Han, Sangjin and Egi, Norbert and Panda, Aurojit and Ratnasamy, Sylvia and Shi, Guangyu and Shenker, Scott},
  title = {Network Support for Resource Disaggregation in Next-generation Datacenters},
- booktitle = {Proceedings of the Twelfth ACM Workshop on Hot Topics in Networks},
- series = {HotNets-XII},
- year = {2013},
- url = {http://doi.acm.org/10.1145/2535771.2535778},
+% booktitle = {Proceedings of the Twelfth ACM Workshop on Hot Topics in Networks},
+ series = {HotNets '13},
+% year = {2013},
+% url = {http://doi.acm.org/10.1145/2535771.2535778},
 } 
 
 @misc{tcpdump,
@@ -898,26 +899,43 @@ title = {Intel Silicon Photonics Research},
 howpublished = "\url{http://www.intel.com/content/www/us/en/research/intel-labs-silicon-photonics-research.html}"
 }
 
+
+@misc{arista,
+author = {Arista},
+title = {Switching Architectures for Cloud Network Designs},
+howpublished = "\url{https://www.arista.com/assets/data/pdf/SwitchingArchitecture_wp.pdf}"
+}
+
+@misc{broadcom,
+title = {Broadcom BCM56850},
+howpublished = "\url{https://www.broadcom.com/collateral/pb/56850-PB03-R.pdf}"
+}
+
+
+
 @INPROCEEDINGS{lowlatency,
     author = {Stephen M. Rumble and Diego Ongaro and Ryan Stutsman and Mendel Rosenblum and John K. Ousterhout},
     title = {It’s Time for Low Latency},
     series = {HotOS '11}
 }
 
-@article{fastpass,
+@inprocedings{fastpass,
   title={Fastpass: A Centralized “Zero-Queue” Datacenter Network},
   author={Perry, Jonathan and Ousterhout, Amy and Balakrishnan, Hari and Shah, Devavrat and Fugal, Hans},
+  series = {Sigcomm '14},
   year={2014},
-  publisher={Association for Computing Machinery}
+%  publisher={Association for Computing Machinery}
 }
 
-@article{phost,
+@inproceedings{phost,
   title={pHost: Distributed Near-optimal Datacenter Transport Over Commodity Network Fabric},
   author={Gao, Peter X and Narayan, Akshay and Kumar, Gautam and Agarwal, Rachit and Ratnasamy, Sylvia and Shenker, Scott},
-  year={2014},
+  year={2015},
   series={CoNEXT '15},
   publisher={Association for Computing Machinery}
 }
+
+
 
 
 @inproceedings{endpoint,
@@ -996,6 +1014,15 @@ howpublished = "\url{http://www.intel.com/content/www/us/en/research/intel-labs-
   publisher={IEEE}
 }
 
+@inproceedings{greenberg-sigcomm15,
+  title={SDN for the Cloud},
+  author={Greenberg, Albert},
+  series = {Sigcomm '15},
+  journal={SIGCOMM},
+  year={2015},
+  publisher={ACM}
+}
+
 
 @misc{opencompute,
 title = {Open Compute Project},
@@ -1044,17 +1071,22 @@ howpublished = "\url{http://www.opencompute.org/}"
   year={2011}
 }
 
-@article{catapult,
-  title={A Reconfigurable Fabric for Accelerating Large-Scale Datacenter Services},
-  author={Eric, Andrew Putnam Adrian M Caulfield and Chiou, S Chung Derek and Constantinides, Kypros and Demme, John and Esmaeilzadeh, Hadi and Fowers, Jeremy and Michael, Gopi Prashanth Gopal Jan Gray and Hauck, Haselman Scott and Heil, Stephen and Sitaram, Amir Hormati Joo-Young Kim and others}
+@inproceedings{catapult,
+  title={A reconfigurable fabric for accelerating large-scale datacenter services},
+  author={Putnam, Andrew and Caulfield, Adrian M and Chung, Eric S and Chiou, Derek and Constantinides, Kypros and Demme, John and Esmaeilzadeh, Hadi and Fowers, Jeremy and Gopal, Gopi Prashanth and Gray, Jordan and others},
+  booktitle={Computer Architecture (ISCA), 2014 ACM/IEEE 41st International Symposium on},
+  pages={13--24},
+  year={2014},
+  organization={IEEE}
 }
 
 @inproceedings{farm,
   title={Farm: Fast remote memory},
   author={Dragojevi{\'c}, Aleksandar and Narayanan, Dushyanth and Hodson, Orion and Castro, Miguel},
-  booktitle={Proceedings of the 11th USENIX Conference on Networked Systems Design and Implementation, NSDI},
-  volume={14},
-  year={2014}
+  series = {NSDI '14},
+%   booktitle={Proceedings of the 11th USENIX Conference on Networked Systems Design and Implementation, NSDI},
+%  volume={14},
+%  year={2014}
 }
 
 @inproceedings{grappa,
@@ -1077,10 +1109,11 @@ howpublished = "\url{http://www.opencompute.org/}"
 @inproceedings{r2c2,
   title={R2C2: A Network Stack for Rack-scale Computers},
   author={Costa, Paolo and Ballani, Hitesh and Razavi, Kaveh and Kash, Ian},
-  booktitle={Proceedings of the 2015 ACM Conference on Special Interest Group on Data Communication},
-  pages={551--564},
-  year={2015},
-  organization={ACM}
+  series = {SIGCOMM '15},
+%  booktitle={Proceedings of the 2015 ACM Conference on Special Interest Group on Data Communication},
+%  pages={551--564},
+%  year={2015},
+%  organization={ACM}
 }
 
 
@@ -1111,6 +1144,22 @@ howpublished = "\url{https://en.wikipedia.org/wiki/Graphics_processing_unit}"
 }
 
 
+@misc{infiniband,
+title = {InfiniBand},
+howpublished = "\url{https://en.wikipedia.org/wiki/InfiniBand}"
+}
+
+@misc{40gnic,
+title = {Intel Ethernet Converged Network Adapter XL710 10/40 GbE},
+howpublished = "\url{http://www.intel.com/content/www/us/en/network-adapters/converged-network-adapters/ethernet-xl710-brief.html}"
+}
+
+
+@misc{100gnic,
+title = {100G CLR4 White Paper},
+howpublished = "\url{http://www.intel.com/content/www/us/en/research/intel-labs-clr4-white-paper.html}"
+}
+
 @inproceedings{reg-ex-hardware,
   title={Regular expression matching on graphics hardware for intrusion detection},
   author={Vasiliadis, Giorgos and Polychronakis, Michalis and Antonatos, Spiros and Markatos, Evangelos P and Ioannidis, Sotiris},
@@ -1120,7 +1169,16 @@ howpublished = "\url{https://en.wikipedia.org/wiki/Graphics_processing_unit}"
   organization={Springer}
 }
 
-
+@article{nox,
+  title={NOX: towards an operating system for networks},
+  author={Gude, Natasha and Koponen, Teemu and Pettit, Justin and Pfaff, Ben and Casado, Mart{\'\i}n and McKeown, Nick and Shenker, Scott},
+  journal={ACM SIGCOMM Computer Communication Review},
+  volume={38},
+  number={3},
+  pages={105--110},
+  year={2008},
+  publisher={ACM}
+}
 
 
 
