@@ -14,7 +14,7 @@ Going forward we anticipate work in designing disaggregated datacenters will fal
 As demonstrated in \S\ref{sec:requirements} low latency networks will be a critical part of building  disaggregated datacenters on a large scale. Fortunately this is a hot topic in networking~\cite{lowlatency} and networks will likely achieve the bounds specific in this paper.
 We believe reducing network latency can be achieve in the following directions.
 
-At physical layer, newer hardware technologies, such as cut-through switching, can reduce overhead of packet trasmission in datacenter network. All optimal switches can reduce the network latency by removing queuing delay, which is the most significant contributor to the delay in current datacenter architecture.
+At physical layer, newer hardware technologies, such as cut-through switching, can reduce overhead of packet transmission in datacenter network. All optimal switches can reduce the network latency by removing queuing delay, which is the most significant contributor to the delay in current datacenter architecture.
 At network layer, using TDMA based network architecture proposed by Vattikonda et al.~\cite{tdma} makes the network latency more deterministic. 
 Orthogonal to that, at transport layer, improved protocol design such as pFabric~\cite{pfabric} and pHost~\cite{phost} can further reduce latency by scheduling flows as quickly as possible. 
 Fourth, at the OS layer, applying techniques such as zero-copy~\cite{netmap} can significantly reduce OS network stack overhead and hence reduces latency.
@@ -27,23 +27,36 @@ Basic concepts such as variable-sized packets and best-effort service are common
 We believe it worth exploring the following aspects of the network architecture.
 
 The first question we may ask is whether packet still remains as the right abstraction for disaggregated datacenters. 
-We found that most of the intra- and inter-server networks use packets swtiched network, so we believe packets should still be the correct abstraction. 
+We found that most of the intra- and inter-server networks use packets switched network, so we believe packets should still be the correct abstraction. 
 The open questions are whether packet size should be fixed for disaggregated datacenters, and what should be the size of packets. 
 While using larger MTUs amortizes packet header processing overhead, and improves the network throughput, it increases the network latency for small message passing workload.
 
 A second question is how should reliability being guaranteed. 
 While it is clear that each resource endpoint need an end-to-end reliable transfer abstraction, it is unclear where this functionality should be placed.
-Inter-server link technologies such as Infini-Band guarantees reliableility at each link, but Ethernet use end-to-end retransmission for reliability. 
+Inter-server link technologies such as Infini-Band guarantees reliability at each link, but Ethernet use end-to-end retransmission for reliability. 
 
 The last question is related to bandwidth reservation. In Intra-server network, bandwidth is usually reserved for each link (CPU-Memory, CPU-NIC). 
-It would be interesting to explore whether using statistical multiplexing is sufficient after disaggregation these compoenents.
+It would be interesting to explore whether using statistical multiplexing is sufficient after disaggregation these components.
 
 
 
 
 \paragraphb{System Architecture}
-While this paper used a VM abstraction for emulation disaggregated datacenters, it is unclear whether this will remain the right abstraction going forward. For example, a job-centric abstraction in which users specify resource needs rather than provisioning VMs could prove to be a more flexible and natural abstraction to express tasks in the future.
 
+The cost of hardware and its maintenance has been the most powerful driving force of datacenter evolution.
+We believe that disaggregation could further reduces the cost of datacenter for the following reasons.
+First, the datacenter operator has finer-grained control over resource provisioning. 
+Second, resource disaggregation simplifies management complexity. 
+Lastly, the unified network cuts out a layer of integration by avoiding PCIe-Ethernet-PCIe traverse in current server-to-server communication.
+Although the cost of disaggregation is hard to quantify at this moment, we suspect that
+cost savings might turn out to be one of the strongest motivations for disaggregated datacenters.
+
+While this paper used a VM abstraction for emulation disaggregated datacenters, it is unclear whether this will remain the right abstraction going forward.
+For example, a job-centric abstraction in which users specify resource needs rather than provisioning VMs could prove to be a more flexible and natural abstraction to express tasks in the future.
+
+Finally, we envisage that a unified resource management architecture that combines network controller and datacenter resource scheduler gives more flexibility for resource management.
+For example, the resource controller can migrate resources from hotspots to less congested links.
+We leave the design of such resource management architecture for future work.
 
 
 

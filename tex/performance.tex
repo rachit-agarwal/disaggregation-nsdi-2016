@@ -10,7 +10,7 @@ We explore the sufficiency of existing network-layer solutions for \dis in two s
 %
 \begin{figure*}
   \centering
-    \includegraphics[width = 2in]{img/fig12_dcScale_slowdownsGraph} 
+    \includegraphics[width = 2in]{img/fig12_dc-scale_slowdowns} 
     \subfigure{
     \includegraphics[width=2in]{img/fig12_dc-scale_slowdowns_small}
     }
@@ -25,7 +25,7 @@ We explore the sufficiency of existing network-layer solutions for \dis in two s
 %
 \begin{figure*}
   \centering
-    \includegraphics[width = 2in]{img/fig12_raScale_slowdownsGraph} 
+    \includegraphics[width = 2in]{img/fig12_rack-scale_slowdowns} 
     \subfigure{
     \includegraphics[width=2in]{img/fig12_rack-scale_slowdowns_small}
     }
@@ -46,7 +46,7 @@ For all the simulations in this section, we use the setup from prior work in dat
 %
 \item \paragraphb{Fastpass} Fastpass~\cite{fastpass} is a centralized scheduling algorithm in which every packet is scheduled by a global arbiter. We implemented a optimistic central scheduler in our simulator to compare the performance of Fastpass with other applications as we lacked access to a real disaggregated datacenter in which to test Fastpass. Our implementation assumes that the arbiter can process an unlimited number of flows infinitely fast, and only considers the latency and bandwidth penalties of central scheduling. The implementation of this centralized arbiter is discussed in detail in previous work~\cite{phost}. We set the Fastpass epoch size to be 8 packets, obtained from the Fastpass paper.
 %
-\item \paragraphb{TCP} We implemented TCP without the three-way handshake as a modest performance improvement. We used a retransmission timeout value of $45$us, which we tuned experimentally.
+\item \paragraphb{TCP} We implemented TCP with slow start and congestion avoidance. We used a retransmission timeout value of $45$us, which we tuned experimentally.
 \end{enumerate}
 
 There are multiple challenges in executing the above two steps that we had to resolve.
@@ -86,8 +86,12 @@ Unfortunately, the \texttt{blktrace} tool we use to gather the disk access trace
 
 \subsection{Network-level performance}
 \label{ssec:nlp}
-Figure~\ref{fig:phostp-rs} shows the performance of pFabric, pHost, Fastpass, and TCP as discussed above for the mean slowdown metric, where the flow completion time achieved in simulation for a given flow is normalized by the time it would have taken that flow to complete if it were alone in the network and this number is then averaged across all flows in the simulation. We observe that for latency-sensitive short flows representing memory accesses, the overhead from network performance is minimal. For longer flows, the performance is slightly worse, but still quite good. Note that for the graphlab and memcached applications, even TCP is sufficient for good network performance; this indicates that the \dis workload is manageable.
+Figure~\ref{fig:phostp-rs} shows the performance of pFabric, pHost, Fastpass, and TCP as discussed above for the mean slowdown metric, where the flow completion time achieved in simulation is normalized by the time it would have taken that flow to complete if it were alone in the network. This number is then averaged across all flows in the simulation to calculate the mean slowdown. 
 
+\paragraphb{Overview}
+We observe that for latency-sensitive short flows representing memory accesses, the overhead from network performance is minimal. For longer flows, the performance is slightly worse, but still quite good. Digging deeper into these results we see by referring to Figure~\ref{fig:fsd} that the mix of short and long flows in a given application's flow size distribution can affect the network performance. For example, Fastpass achieves a lower mean slowdown for the terasort trace than for graphlab despite having similar performance on both long flows and short flows for each application. However, the flow size distribution of the two applications reveals that terasort has longer flows. Since long flow performance in Fastpass is better, terasort achieves better performance. 
+
+\paragraphb{Feasibility of centralized scheduling}
 While Fastpass performs well for long flows, it does not match pFabric, pHost, or TCP in short flow performance for most applications, which is critical in \dis. While Fastpass outperforms pHost, pFabric, and TCP for the wordcount-hadoop application, this is because wordcount-hadoop has a larger share of long flows for which Fastpass achieves good performance. Overall, our results suggest a centralized solution will be insufficient for a disaggregated datacenter due to consistently worse performance for latency-sensitive short flows.
 
 %\begin{enumerate}
@@ -101,7 +105,13 @@ While Fastpass performs well for long flows, it does not match pFabric, pHost, o
 
 \subsection{Application-level performance}
 \label{ssec:alp}
-Figure~\ref{fig:appfabric} shows the application level slowdown after injecting latency into memory accesses. The application layer effects depend not only on the network performance as discussed in \S\ref{ssec:nlp} above but also the characteristics of the application being evaluated. For example, memcached and terasort observe similar performance degradation despite memcached having better network performance. This is because memcached has more memory accesses than terasort. 
+Figure~\ref{fig:appfabric} shows the application level slowdown after injecting latency into memory accesses. Overall, the application layer slowdown due to network-layer effects is limited to \rc{n} percent slower than assuming an infinitely fast network. 
+
+\paragraphb{Importance of network}
+Note that this contrasts with recent work in the \pdis domain suggesting~\cite{kay-nsdi2015} that the network can improve application performance by at most 2\%. Rather, our results suggest that in \dis network-level improvements can have a greater effect.
+
+\paragraphb{Dependent on application characteristics}
+The application layer effects depend not only on the network performance as discussed in \S\ref{ssec:nlp} above but also the characteristics of the application being evaluated. For example, memcached and terasort observe similar performance degradation despite memcached having better network performance. This is because memcached performs more memory accesses than terasort. 
 
 \subsection{Knobs}
 \label{ssec:ddcArchKnob}
