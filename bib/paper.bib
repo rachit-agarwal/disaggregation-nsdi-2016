@@ -15,6 +15,15 @@
     year = {2001}
 }
 
+@inproceedings{herd,
+  title={Using RDMA efficiently for key-value services},
+  author={Kalia, Anuj and Kaminsky, Michael and Andersen, David G},
+  booktitle={Proceedings of the 2014 ACM conference on SIGCOMM},
+  pages={295--306},
+  year={2014},
+  organization={ACM}
+}
+
 @inproceedings{spark,
  author = {Zaharia, Matei and Chowdhury, Mosharaf and Franklin, Michael J. and Shenker, Scott and Stoica, Ion},
  title = {Spark: Cluster Computing with Working Sets},
@@ -864,22 +873,24 @@ url          = {http://research.microsoft.com/apps/pubs/default.aspx?id=138279},
 
 @INPROCEEDINGS{ddcHwDesign2, 
 author={Lim, Kevin and Turner, Yoshio and Santos, Jose Renato and Auyoung, Alvin and Chang, Jichuan and Ranganathan, Parthasarathy and Wenisch, Thomas F.}, 
-booktitle={High Performance Computer Architecture (HPCA), 2012 IEEE 18th International Symposium on}, 
 title={System-level implications of disaggregated memory}, 
-year={2012}, 
+series={HPCA '12},
+%booktitle={High Performance Computer Architecture (HPCA), 2012 IEEE 18th International Symposium on}, 
+%year={2012}, 
 }
 
 @INPROCEEDINGS{ddcHwDesign3, 
 author={Sudan, K. and Balakrishnan, S. and Lie, S. and Min Xu and Mallick, D. and Lauterbach, G. and Balasubramonian, R.}, 
-booktitle={High Performance Computer Architecture (HPCA2013), 2013 IEEE 19th International Symposium on}, 
 title={A novel system architecture for web scale applications using lightweight CPUs and virtualized I/O}, 
+series = {HPCA '13},
+%booktitle={High Performance Computer Architecture (HPCA2013), 2013 IEEE 19th International Symposium on}, 
 }
 
 @inproceedings{hotnets,
  author = {Han, Sangjin and Egi, Norbert and Panda, Aurojit and Ratnasamy, Sylvia and Shi, Guangyu and Shenker, Scott},
  title = {Network Support for Resource Disaggregation in Next-generation Datacenters},
-% booktitle = {Proceedings of the Twelfth ACM Workshop on Hot Topics in Networks},
  series = {HotNets '13},
+% booktitle = {Proceedings of the Twelfth ACM Workshop on Hot Topics in Networks},
 % year = {2013},
 % url = {http://doi.acm.org/10.1145/2535771.2535778},
 } 
@@ -919,18 +930,18 @@ howpublished = "\url{https://www.broadcom.com/collateral/pb/56850-PB03-R.pdf}"
     series = {HotOS '11}
 }
 
-@inprocedings{fastpass,
+@inproceedings{fastpass,
   title={Fastpass: A Centralized “Zero-Queue” Datacenter Network},
   author={Perry, Jonathan and Ousterhout, Amy and Balakrishnan, Hari and Shah, Devavrat and Fugal, Hans},
-  series = {Sigcomm '14},
-  year={2014},
+  series = {SIGCOMM '14},
+%  year={2014},
 %  publisher={Association for Computing Machinery}
 }
 
 @inproceedings{phost,
   title={pHost: Distributed Near-optimal Datacenter Transport Over Commodity Network Fabric},
   author={Gao, Peter X and Narayan, Akshay and Kumar, Gautam and Agarwal, Rachit and Ratnasamy, Sylvia and Shenker, Scott},
-  year={2015},
+  %year={2015},
   series={CoNEXT '15},
   publisher={Association for Computing Machinery}
 }
@@ -938,7 +949,7 @@ howpublished = "\url{https://www.broadcom.com/collateral/pb/56850-PB03-R.pdf}"
 
 
 
-@inproceedings{endpoint,
+@article{endpoint,
   title={Leveraging endpoint flexibility in data-intensive clusters},
   author={Chowdhury, Mosharaf and Kandula, Srikanth and Stoica, Ion},
   booktitle={ACM SIGCOMM Computer Communication Review},
@@ -1017,10 +1028,10 @@ howpublished = "\url{https://www.broadcom.com/collateral/pb/56850-PB03-R.pdf}"
 @inproceedings{greenberg-sigcomm15,
   title={SDN for the Cloud},
   author={Greenberg, Albert},
-  series = {Sigcomm '15},
-  journal={SIGCOMM},
-  year={2015},
-  publisher={ACM}
+  series = {SIGCOMM '15},
+%  journal={SIGCOMM},
+%  year={2015},
+%  publisher={ACM}
 }
 
 
@@ -1074,10 +1085,11 @@ howpublished = "\url{http://www.opencompute.org/}"
 @inproceedings{catapult,
   title={A reconfigurable fabric for accelerating large-scale datacenter services},
   author={Putnam, Andrew and Caulfield, Adrian M and Chung, Eric S and Chiou, Derek and Constantinides, Kypros and Demme, John and Esmaeilzadeh, Hadi and Fowers, Jeremy and Gopal, Gopi Prashanth and Gray, Jordan and others},
-  booktitle={Computer Architecture (ISCA), 2014 ACM/IEEE 41st International Symposium on},
-  pages={13--24},
-  year={2014},
-  organization={IEEE}
+  series = {ISCA '14},
+%  booktitle={Computer Architecture (ISCA), 2014 ACM/IEEE 41st International Symposium on},
+ % pages={13--24},
+ % year={2014},
+ % organization={IEEE}
 }
 
 @inproceedings{farm,
@@ -1092,17 +1104,17 @@ howpublished = "\url{http://www.opencompute.org/}"
 @inproceedings{grappa,
  author = {Nelson, Jacob and Holt, Brandon and Myers, Brandon and Briggs, Preston and Ceze, Luis and Kahan, Simon and Oskin, Mark},
  title = {Latency-tolerant Software Distributed Shared Memory},
- booktitle = {Proceedings of the 2015 USENIX Conference on Usenix Annual Technical Conference},
+% booktitle = {Proceedings of the 2015 USENIX Conference on Usenix Annual Technical Conference},
  series = {USENIX ATC '15},
- year = {2015},
- isbn = {978-1-931971-225},
- location = {Santa Clara, CA},
- pages = {291--305},
- numpages = {15},
- url = {http://dl.acm.org/citation.cfm?id=2813767.2813789},
- acmid = {2813789},
- publisher = {USENIX Association},
- address = {Berkeley, CA, USA},
+% year = {2015},
+% isbn = {978-1-931971-225},
+% location = {Santa Clara, CA},
+% pages = {291--305},
+% numpages = {15},
+% url = {http://dl.acm.org/citation.cfm?id=2813767.2813789},
+% acmid = {2813789},
+% publisher = {USENIX Association},
+% address = {Berkeley, CA, USA},
 } 
 
 
@@ -1128,9 +1140,9 @@ howpublished = "\url{https://en.wikipedia.org/wiki/Non-volatile_random-access_me
 }
 
 @misc{sriov,
-author = {Intel® LAN Access Division}
+author = {{Intel® LAN Access Division}},
 title = {"An Introduction to SR-IOV Technology"},
-howpublished = "\url{http://www.intel.com/content/www/us/en/pci-express/pci-sig-sr-iov-primer-sr-iov-technology-paper.html}"
+howpublished = "\url{http://goo.gl/m7jP3}"
 }
 
 @misc{vpc,

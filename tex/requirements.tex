@@ -6,14 +6,14 @@
 
 
 We start by evaluating network latency and bandwidth requirements for disaggregation.
-We describe our evaluation methodology (\S\ref{ssec:rmethod}), present our results (\S\ref{ssec:rr}) and then discuss their implications (\S\ref{ssec:rtt}). 
+We describe our evaluation methodology (\S \ref{ssec:rmethod}), present our results (\S \ref{ssec:rr}) and then discuss their implications (\S \ref{ssec:rtt}). 
 
 \subsection{Methodology}
 \label{ssec:rmethod}
 In a disaggregated datacenter, traffic between resources that was contained within a server is now carried on the “external” network. As with other types of interconnects, the key requirement will be low latency and high throughput to enable this disaggregation. We review the forms of communication between resources within a server in Table~\ref{tab:tech} to examine the feasibility of such a network. 
 We ignore for now the possible effects of network congestion which we will evaluate in \S\ref{sec:existing}.
 
-As mentioned in \S\ref{sec:summary}, CPU-to-CPU cache coherence traffic does not cross the external traffic.
+As mentioned in \S\ref{sec:summary}, CPU-to-CPU cache coherence traffic does not cross the external network.
 For I/O traffic to network interfaces and disks, the required latency and bandwidth is such that we can expect to consolidate them within the unified network with low performance impact. 
 Thus, the dominant impact to application performance will come from disaggregating memory and hence we focus on evaluating the network bandwidth and latency required to support remote memory.
 
@@ -60,7 +60,7 @@ with existing page replacement algorithms controlling when and how pages are tra
 We intercept all page faults and inject artificial delays to emulate network round-trip latency and bandwidth for each paging operation. 
 
 We measure relative performance on the basis of throughput or completion time as compared to the zero-delay case. Thus our results do not account for the delay introduced by  software overheads for page operations 
-and should be interpreted as relative performance degradation over different network configurations.%, not the absolute performance of disaggregation.
+and should be interpreted as relative performance degradation over different network configurations. %, not the absolute performance of disaggregation.
 Note too that the delay we inject is purely an artificial parameter and hence doesn't (for example) realistically model queueing delays that may result from network congestion caused by the extra traffic due to disaggregation; we consider network-wide traffic and effects such as congestion in the sections to follow.
 
 
@@ -136,14 +136,14 @@ We now evaluate the network requirements in \dis, in terms of latency and bandwi
 We start our evaluation by studying the impact of local memory on application-level performance.
 We fix the latency and bandwidth that we inject to be $5\mu$s and $40$Gbps (we pick these values for reasons described below) and measure degradation in application-level performance as the fraction of local memory is varied from $100\%$ (which corresponds to no CPU-memory disaggregation) down to $10\%$.
 % of the available main memory{\footnote{The $100\%$ local CPU cache size corresponds to no CPU-memory disaggregation, as in server-centric architectures.} \rc{Shall we say that we use this as our baseline, rather than application-level performance without SIT, to incorporate SIT overhead. (a+x)/(b+x) problem.}}}. 
-Figure~\ref{fig:impb} shows that the application-level performance in \dis is within reasonable bounds ($5$--$10\%$) of that in a server-centric architecture as long as the local memory cache is no smaller than $25\%$ of main memory. For larger local cache sizes, performance only improves slowly and for any smaller cache size, the performance degrades significantly. 
+Figure~\ref{fig:impb} shows that the application-level performance in \dis is within reasonable bounds (roughly $5$\%) of that in a server-centric architecture as long as the local memory cache is no smaller than $25\%$ of main memory. For larger local cache sizes, performance only improves slowly and for any smaller cache size, the performance degrades significantly. 
 We conclude that \emph{a local memory cache that is sized at $25\%$ of current main memory is sufficient} to maintain reasonable application-level performance in \dis. In what follows, unless stated otherwise, we set the local memory size to this value.
 
 %
 \begin{figure}
   \centering
     \includegraphics[width = 3.5in]{img/vary_remote_mem.eps} 
-  \caption{\small{Varying the portion of local memory from 10\% to 100\%, the figure shows the application performance degradation with 5$\mu$s end-to-end network latency and 40Gbps bandwidth. With 25\% of the total memory local, the performance degredation is within 5\% to 10\%. }}
+  \caption{\small{Varying the portion of local memory from 10\% to 100\%, the figure shows the application performance degradation with 5$\mu$s end-to-end network latency and 40Gbps bandwidth. With 25\% of the total memory local, the performance degredation is typically no more than 5\%. }}
   \label{fig:impb}
 \end{figure}
 %
@@ -164,7 +164,7 @@ We conclude that \emph{a local memory cache that is sized at $25\%$ of current m
 %
 \paragraphb{End-to-end latency and bandwidth requirements} 
 %$5\mu$s end-to-end latency and $40$Gbps access link bandwidth is sufficient}
-Figure~\ref{fig:latb} shows the performance degradation that results with nine different latency/bandwidth combinations, given 25\% of memory capacity as local.% of the measured memory footprint for each workload. 
+Figure~\ref{fig:latb} shows the performance degradation that results with nine different latency/bandwidth combinations, given 25\% of memory capacity as local.\footnote{The small discrepancies between Figures \ref{fig:impb} and \ref{fig:latb} are due to the small number of runs used in Figure \ref{fig:impb}.} % of the measured memory footprint for each workload. 
 %We now evaluate the application-level performance for various \dis configurations in terms of end-to-end network latency and access link bandwidth at the end hosts (see Figure~\ref{fig:latb}). 
 We make three observations. First, given a network with $5-10\mu$s end-to-end latency and $40$Gbps access link bandwidth, the application-level performance in \dis is within $5\%$ of that in current server-centric datacenters. 
 Second, as shown in Figure \ref{fig:impl}, fixing bandwidth at 40Gbps, the application performance is sensitive to the increase of end-to-end latency.

@@ -1,11 +1,22 @@
-\section{Existing Solutions Sufficient?}
+\section{Network Designs for Disaggregation}
 \label{sec:existing}
-In this section, we explore whether existing network designs can meet the application-level requirements from the network (\S\ref{sec:requirements}), in terms of end-to-end network latency, for the workloads from \S\ref{sec:workloads}. We first describe the methodology in \S\ref{ssec:ssmethod}. We then evaluate the network-level performance for the workloads (\S\ref{ssec:nlp}) for several existing network designs. Finally, we use the results for network-level performance to evaluate the application-level performance (\S\ref{ssec:alp}) in \dis using existing network designs. 
+
+In this section, we explore whether existing network designs can meet the requirements identified in \S\ref{sec:requirements}, for the workloads from \S\ref{sec:workloads}. 
+We start by describing our methodology (\S\ref{ssec:ssmethod}), then evaluate the network-level performance of a suite of network designs for \dis traffic workloads (\S\ref{ssec:nlp}), and finally 
+evaluate how these designs impact application performance (\S\ref{ssec:alp}). 
 
 %
 \subsection{Methodology}
 \label{ssec:ssmethod}
-We explore the sufficiency of existing network-layer solutions for \dis in two steps. First, we take the flows generated from \S\ref{sec:workloads} and simulate the network-layer performance (flow completion time) for these flows. We then return to our emulator, take the respective flow completion time for flows, and inject the respective latencies using SIT, as described in \S\ref{sec:requirements}, thus allowing us to evaluate the effect on application level performance. 
+
+We evaluate the use of existing network designs for \dis in two steps.
+First, we evaluate how existing network designs fare under \dis traffic workloads. 
+For this, we consider a suite of state-of-the-art network designs and use simulation to evaluate their network-layer performance (flow completion time) for the workloads generated from \S\ref{sec:workloads}.
+We then return to our real-world applications (Table~\ref{tab:workloads}) and once again 
+emulate disaggregation by injecting latencies for page misses. 
+However, now we inject the flow completion times obtained from our best-performing network design (as opposed to the constant latencies from \S\ref{sec:requirements}). 
+This effectively `closes the loop', allowing us to evaluate the impact of disaggregation on 
+application-level performance for realistic network designs and conditions. 
 
 %
 \begin{figure*}
@@ -36,23 +47,37 @@ We explore the sufficiency of existing network-layer solutions for \dis in two s
   \label{fig:phostp-rs}
 \end{figure*}
 %
-For all the simulations in this section, we use the setup from prior work in datacenter transport simulation~\cite{pfabric, phost}. In particular, we simulate a $144$-node full bisection bandwidth Clos topology (the same used in Firebox~\cite{firebox} \rc{do we need this?}) with $40$Gbps access link capacity, $0.2$us of latency per hop, and $36$KB buffers per port. We evaluate the following four protocols:
-
+For all the simulations in this section, we use the same setup as prior work on datacenter transport designs~\cite{pfabric, phost}. We simulate a $144$-node full bisection bandwidth Clos topology, $0.2$us of latency per hop, and $36$KB buffers per port; our only change is to use $40$Gbps link speeds at the edge as per our discussion in~\S\ref{sec:requirements}. We evaluate the following three protocols. In each case, we set protocol-specific parameters to the values that we found (through experimentation) yielded the best performance for that protocol.
 
 \begin{enumerate}
-\item \paragraphb{pFabric} pFabric~\cite{pfabric} uses priority queues in the network for scheduling and congestion control, prioritizing flows with a smaller remaining flow size. We set pFabric to have an initial congestion window of 2 packets and a retransmission timeout of $45$us; we tuned these parameters experimentally.
+\item \paragraphb{pFabric} The pFabric protocol~\cite{pfabric} achieves near-optimal flow completion times by approximating the behavior of shortest-job-first scheduling in a network context. pFabric uses specialized switch hardware to support scheduling that prioritizes flows with a smaller remaining flow size. We set pFabric to have an initial congestion window of 2 packets and a retransmission timeout of $45$us.
 %
-\item \paragraphb{pHost} pHost~\cite{phost} answers the question of how close a protocol can get to pFabric's performance by scheduling only at the end hosts. This allows the use of commodity switches as well as flexibility in policy selection. We set pHost to have a free token limit of 8 packets and a retransmission timeout of $9.5$us; we obtained these parameters from pHost's implementation.
+\item \paragraphb{pHost} pHost~\cite{phost} answers the question of how close a protocol can get to pFabric's performance by scheduling only at the end hosts. This allows the use of commodity switches as well as flexibility in policy selection. We set pHost to have a free token limit of 8 packets and a retransmission timeout of $9.5$us.
+%; we obtained these parameters from pHost's implementation.
 %
-\item \paragraphb{Fastpass} Fastpass~\cite{fastpass} is a centralized scheduling algorithm in which every packet is scheduled by a global arbiter. We implemented a optimistic central scheduler in our simulator to compare the performance of Fastpass with other applications as we lacked access to a real disaggregated datacenter in which to test Fastpass. Our implementation assumes that the arbiter can process an unlimited number of flows infinitely fast, and only considers the latency and bandwidth penalties of central scheduling. The implementation of this centralized arbiter is discussed in detail in previous work~\cite{phost}. We set the Fastpass epoch size to be 8 packets, obtained from the Fastpass paper.
+\item \paragraphb{Fastpass} Fastpass~\cite{fastpass} introduces a centralized scheduler that schedules  every packet. We implement Fastpass's scheduling algorithm in our simulator and optimistically assume that the scheduler's decision logic itself incurs no overhead (i.e., takes zero time) and hence we only consider the latency and bandwidth overhead of contacting the central scheduler. The implementation of this centralized arbiter is discussed in detail in previous work~\cite{phost}. We set the Fastpass epoch size to be 8 packets.%, obtained from the Fastpass paper.
 %
-\item \paragraphb{TCP} We implemented TCP with slow start and congestion avoidance. We used a retransmission timeout value of $45$us, which we tuned experimentally.
 \end{enumerate}
 
-There were multiple challenges in performing the above evaluations that we encountered.
+%There were multiple challenges in performing the above evaluations that we encountered.
 
-\paragraphb{Scaling up}
-To represent a $144$-node topology using only 13 nodes of measurement data (5 CPU, 5 memory, 3 disk as discussed in \S\ref{sec:methol}), we collected two CDFs representing the interarrival and flow size distributions for each of the 70 possible source-destination pairs (recall from the discussion in \S\ref{sssec:spatialdist} that although there are 13 nodes, many source-destination pairs will be quiescent). We then assign each node in the topology a sender profile and 12 other nodes in the destination it will send traffic to. We then generate flows between these chosen source-destination pairs by drawing from the appropriate distribution in our traffic matrix. Overall, this method should approximate network traffic in \dis well enough for our evaluation of transport protocols because it draws from our observed distribution of flows that would appear in \dis.
+\paragraphb{Traffic Generation}
+As mentioned above, the disaggregated cluster we simulate includes $144$ nodes 
+with 55 CPU, 55 memory and 34 disk blades. 
+Each CPU blade is associated with 12 remote memory and disk blades (i.e., the `VM' abstraction in our simulation comprises one CPU whose memory and disk address space 
+is spread across 12 remote blades). 
+We generate traffic in this topology as follows. From our workload traces obtained in \S\ref{sec:workloads}, we generate CDFs representing the various distributions of flow 
+sizes and flow inter-arrival times for each CPU blade. Each CPU blade draws from these distributions to generate flows directed at its associated 12 remote memory and disk blades. In addition, a CPU blade in our simulation generates 3x the load it does 
+in our experiments from \S\ref{sec:workloads}; a single node in the original (non-disaggregated) cluster is replaced by three nodes in the disaggregated cluster and hence we do this 3x scale-up to maintain a comparable level of network load in our 
+simulation. 
+
+\cut{
+\sr{end v1} 
+
+\sr{start of v2}
+
+To represent a $144$-node topology using only 13 nodes of measurement data (5 CPU, 5 memory, 3 disk as discussed in \S\ref{sec:methol}), we collected two CDFs representing the interarrival and flow size distributions for each of the 70 possible source-destination pairs (recall from the discussion in \S\ref{sssec:spatialdist} that although there are 13 nodes, many source-destination pairs do not communicate).  We then assign each node in the topology a sender profile and 12 other nodes in the destination it will send traffic to. We then generate flows between these chosen source-destination pairs by drawing from the appropriate distribution in our traffic matrix. Overall, this method should approximate network traffic in \dis well enough for our evaluation of transport protocols because it draws from our observed distribution of flows that would appear in \dis.
+
 %\begin{enumerate}
 %\item our data is for 5 ec2 nodes, but we have a 144-node topology to fill.
 %\item the 5 ec2 nodes map to 5 cpu blades, 5 memory blades, and 3 disk blades
@@ -62,8 +87,11 @@ To represent a $144$-node topology using only 13 nodes of measurement data (5 CP
 %\item this should give an idea of network loads in a full-dc disaggregated scenario from a transport perspective.
 %\end{enumerate}
 
-\paragraphb{Level of disaggregation: $3\times$ problem?}
-In a \pdis datacenter network, each node represents a collection of 3 resources --- one unit each of CPU, memory, and disk. However in \dis each resource is moved into a separate network node. Applying this transformation naively, one node in the old center would now be spread across three nodes (one for each resource type). As a result, the datacenter as a whole would contain one-third the overall computing resources post-disaggregation. Therefore, to fairly simulate network performance in \dis while representing an equal amount of compute resources we must scale our load up by a factor of 3. We solve this problem by sampling from the size and interarrival distributions discussed above three times per source-destination pair when generating flows in our simulator to represent the presence of three units of computing resource per node.
+%\paragraphb{Level of disaggregation: $3\times$ problem?}
+In a \pdis datacenter network, each node represents a collection of 3 resources --- one unit each of CPU, memory, and disk. However in \dis each resource is moved into a separate network node. Applying this transformation naively, one node in the old datacenter would now be spread across three nodes (one for each resource type). As a result, the datacenter as a whole would contain one-third the overall computing resources post-disaggregation. Therefore, to fairly simulate network performance in \dis while representing an equal amount of compute resources we must scale our load up by a factor of 3. We solve this problem by sampling from the size and interarrival distributions discussed above three times per source-destination pair when generating flows in our simulator to represent the presence of three units of computing resource per node.
+
+\sr{end v2}
+}
 
 \paragraphb{Latency Injection for Disk Flows}
 Unfortunately, the \texttt{blktrace} tool we use to gather the disk access trace does not \emph{intercept} disk accesses as SIT does for remote memory accesses. As a result, we were unable to inject latency into disk accesses in our experiments. However, our results remain significant because memory accesses are much more sensitive to latency injection than disk accesses. Accordingly, when injecting latency to determine application-level performance we only draw from the performance distribution of memory flows in our simulator.
@@ -87,9 +115,31 @@ Unfortunately, the \texttt{blktrace} tool we use to gather the disk access trace
 
 \subsection{Network-level performance}
 \label{ssec:nlp}
-Figure~\ref{fig:phostp-rs} shows the performance of pFabric, pHost, Fastpass, and TCP as discussed above for the mean slowdown metric, where the flow completion time achieved in simulation is normalized by the time it would have taken that flow to complete if it were alone in the network. This number is then averaged across all flows in the simulation to calculate the mean slowdown. 
+Figure~\ref{fig:phostp-rs} shows the performance of pFabric, pHost and Fastpass using the mean slowdown metric introduced in~\cite{pfabric}; mean slowdown is calculated by dividing  the flow completion time achieved in simulation by the time that a flow would take to complete if it were alone in the network. This number is then averaged across all flows in the simulation to calculate the mean slowdown. 
 
-\paragraphb{Overview}
+\paragraphb{Results} 
+We make the following observations. 
+First, looking at the mean slowdown for pFabric and pHost, we observe that they are reasonably close in performance (consistent with results shown in \cite{phost}) but that both protocols achieve higher mean slowdowns than reported 
+in their original papers, both of which report close-to-optimal slowdowns with values close to 1.0~\cite{phost,pfabric}. And this is true even though the average network utilization in our \dis workload is in fact substantially lower than the utilization levels used in the simulation studies of ~\cite{pfabric, phost}. 
+On closer examination, we found that the higher slowdowns with disaggregation are a consequence of the differences in our traffic workloads (both earlier studies used heavy-tailed traffic workloads based on measurement 
+studies from existing datacenters). In our \dis workload, reflecting the 
+application-driven nature of our workload, we observe many flow arrivals that 
+appear very close in time (only observable on sub-10s of microsecond timescales), leading to high slowdowns for these flows. This effect is strongest in the case of our 
+Hadoop-wordcount application which is why it suffers the highest slowdowns. 
+
+Second, we note that while pFabric and pHost perform comparably, FastPass fares worse; this is consistent with the findings reported in~\cite{phost}.
+
+Finally, we  repeat the above simulations but this time simulate rack-scale 
+disaggregation; i.e., a CPU blade's associated memory and disk blades are selected from 
+its own rack. The results are shown in Figure~\ref{fig:phostp-rs}  we see that, as expected rack-scale disaggregation improves slowdown but these improvements 
+are not dramatic. Interesting, FastPass fares worse with rack-scale disaggregation; this is because the centralized scheduler is not rack-local and hence the cost of contacting 
+the scheduler is relatively greater. 
+
+
+
+
+
+\cut{
 We observe that for latency-sensitive short flows representing memory accesses, the overhead from network performance is minimal. For longer flows, the performance is worse, but still quite good. Digging deeper into these results we see by referring to Figure~\ref{fig:fsd} that the mix of short and long flows in a given application's flow size distribution can affect the network performance. For example, Fastpass achieves a lower mean slowdown for the terasort trace than for graphlab despite having similar performance on both long flows and short flows for each application. However, the flow size distribution of the two applications reveals that terasort has longer flows. Since long flow performance in Fastpass is better, terasort achieves better performance. 
 
 \paragraphb{Feasibility of centralized scheduling}
@@ -97,7 +147,7 @@ While Fastpass performs well for long flows, it does not match pFabric, pHost, o
 
 \paragraphb{Performance of TCP}
 Interestingly, TCP achieves better performance than Fastpass for many datapoints despite incurring an RTT overhead for its three-way handshake similar to the arbiter control packet overhead in Fastpass. Intuitively, this is because the arbiter is usually more hops away than a flow's destination, especially in the rack-scale design in Figure~\ref{fig:phostp-rs}. In fact, comparing the performance of short flows in Fastpass and TCP between Figures~\ref{fig:phostp-rs} and~\ref{fig:phostp-ds}, TCP generally performs better compared to Fastpass in the rack-scale design. This is because when flows are contained within a rack, the intra-rack RTT overhead incurred by TCP is significantly less than the inter-rack RTT overhead in Fastpass.
-
+}
 %\begin{enumerate}
 %\item Figure~\ref{fig:phostp} shows network transport performance.
 %\item we use the mean slowdown metric used by pFabric and phost~\cite{pfabric, phost}.
@@ -109,23 +159,28 @@ Interestingly, TCP achieves better performance than Fastpass for many datapoints
 
 \subsection{Application-level performance}
 \label{ssec:alp}
-Figure~\ref{fig:appfabric} shows the application level slowdown after injecting latency into memory accesses when drawing network latency from the pFabric slowdown distribution in~\ref{ssec:nlp}. Overall, the average application layer slowdown due to network-layer effects is limited to a 6.2\% percent slowdown compared to an infinitely fast network. 
 
-\paragraphb{Level of Disaggregation} 
-Surprisingly, disaggregating resources at the datacenter scale did not incur much application layer penalty over rack scale disaggregation. The case with the greatest difference was wordcount, where datacenter- and rack-scale disaggregation incurred 9.1\% and 5\% application layer slowdown, respectively. This naturally follows from the results in Figures~\ref{fig:phostp-ds} and~\ref{fig:phostp-rs}; since the network layer performance is roughly equal across the two schemes, the application layer performance is as well. \rc{that last sentence sucks}
+In this section, we use the flow completion times obtained from the above simulations using pFabric as representing remote memory access times in our emulation 
+methodology from \S\ref{sec:requirements}.
+Figure~\ref{fig:appfabric} shows the degradation in application level performance when injecting remote memory access times drawn from these pFabric flow completion time distribution in~\ref{ssec:nlp}. Overall, the average application layer slowdown due to network-layer effects is limited to a 6.2\% percent slowdown compared to an infinitely fast network. 
+
+We repeat this with the FCTs from our rack-scale simulations. We see  and find show did not incur much application layer penalty over rack scale disaggregation. The case with the greatest difference was wordcount, where datacenter- and rack-scale disaggregation incurred 6.2\% and 3.9\% application layer slowdown, respectively. This naturally follows from the results in Figures~\ref{fig:phostp-ds} and; since the network layer performance is roughly equal across the two schemes, the application layer performance is as well. \rc{that last sentence sucks}
 %graphlab: dcscale 4.9 rscale 3.4
+
+
 
 \paragraphb{Importance of network}
 Note that this contrasts with recent work in the \pdis domain suggesting~\cite{kay-nsdi15} that the network can improve application performance by at most 2\%. Rather, our results suggest that in \dis network-level improvements can have a greater effect.
 
 \paragraphb{Dependent on application characteristics}
-The application layer effects depend not only on the network performance as discussed in \S\ref{ssec:nlp} above but also the characteristics of the application being evaluated. For example, memcached and terasort observe similar performance degradation despite memcached having better network performance. This is because memcached performs more memory accesses than terasort. 
+The application layer effects depend not only on the network performance as discussed in \S\ref{ssec:nlp} above but also the characteristics of the application being evaluated. For example, memcached and terasort observe similar performance degradation despite memcached having better network performance. 
+This is because memcached performs more memory accesses than terasort. 
 
 %
 \begin{figure}
   \centering
     \includegraphics[width = 3in]{img/slowdown.eps} 
-  \caption{\small{Application layer slowdown for each of the four applications at rack-scale and datacenter scale. The average application layer slowdown due to network effects is at most 6.2\%.}}
+  \caption{\small{Application layer slowdown for each of the four applications at rack-scale and datacenter scale after injecting pFabric's FCT. The average application layer slowdown due to network effects is at most 6.2\%.}}
   \label{fig:appfabric}
 \end{figure}
 %
