@@ -32,7 +32,7 @@ software overheads later in this section).
 %		\textbf{domain} & \textbf{} & \textbf{}\\
     Off-disk Batch & WordCount & Hadoop & Wikipedia edit history~\cite{wikipedia}\\\hline
     Off-disk Batch & TeraSort & Hadoop & Terasort benchmark generator\\\hline
-    In-memory Batch & WordCount & Spark & Wikipedia edit history~\cite{wikipedia}\\\hline
+%    In-memory Batch & WordCount & Spark & Wikipedia edit history~\cite{wikipedia}\\\hline
     Graph Processing & Collaborative Filtering & GraphLab & NetFlix movie rating data~\cite{netflix}\\\hline
     Point Queries & Key-value store & Memcached & YCSB benchmark B\\\hline
     % Point Queries & Search & ElasticSearch & PS\\\hline
@@ -50,6 +50,8 @@ software overheads later in this section).
 We conduct a series of experiments to examine how network latency and bandwidth affect application performance with remote memory accesses (which we emulate as described below). 
 We use workloads from diverse applications running on real-world and benchmark datasets, as shown in Table~\ref{tab:workloads}. %These workloads constitute a wide variety of application domains including off-disk batch processing (Hadoop), in-memory batch processing (Spark), graph processing (GraphLab) and point queries (memcached).
  Each application operates on $125$GB of data equally distributed across an Amazon EC2 cluster comprising of $5$ m3.2xlarge servers. Each of these servers has $8$ vCPUs, $30$GB main memory, $2 \times 80$GB SSD drives and a $1$Gbps access link bandwidth.
+ We enabled EC2's Virtual Private Network (VPC~\cite{vpc}) capability in our cluster, ensuring no interference with other Amazon EC2 machines. 
+
 
 
 \paragraphb{Emulating remote memory} 
@@ -153,9 +155,9 @@ We conclude that \emph{a local memory cache that is sized at $25\%$ of current m
     \includegraphics[height = 1.5in]{img/vary_latency_bw.eps}  
   }
 %\hspace{0.05in}
-  \subfigure{
-    \includegraphics[height = 1.5in]{img/vary_latency_bw_spark.eps}
-  }
+%  \subfigure{
+%    \includegraphics[height = 1.5in]{img/vary_latency_bw_spark.eps}
+%  }
   \caption{\small{For a \dis with $5\mu$s end-to-end network latency and $40$Gbps access link bandwidth, the application-level performance remains within $5\%$ of current server-centric architectures for all but in-memory batch processing systems.}}
   \label{fig:latb}
 \end{figure*}

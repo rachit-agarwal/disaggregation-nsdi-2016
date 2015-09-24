@@ -1,17 +1,49 @@
 \section{DDC Traffic Characterization}
 \label{sec:workloads}
-In this section, we characterize the network traffic workloads in disaggregated datacenters. We start by outlining the methodology in \S\ref{ssec:method1}. In \S\ref{ssec:flc}, we present results on network traffic characteristics in \dis, and compare these against the traffic characteristics in current server-centric datacenters. We close the section with a number of implications of our observations in \S\ref{ssec:knobs}.
+
+In the previous section, we modeled the network as a pipe of
+fixed latency and bandwidth, ignoring the impact of network effects 
+such as congestion. We now remove this limitation. 
+However, the impact of network congestion depends greatly
+on the input traffic workload. Hence, in this section, we first try to
+characterize traffic workloads under disaggregation.
+We describe our methodology for this in \S\ref{ssec:method1} and then present our results in \S\ref{ssec:flc}.
 
 \subsection{Methodology}
 \label{ssec:method1} 
-We use the same setup as in \S\ref{ssec:rmethod}, including the SIT, applications, datasets and cluster. The only difference is that we enabled the Virtual Private Network (VPC) in our cluster, ensuring no interference with other Amazon EC2 machines. 
+
+Our overall approach to generating traffic workloads is to collect traces 
+of disk, memory, and network accesses when running applications on 
+existing cluster architectures and then translate these traces into the 
+network traffic that would have resulted had these applications been 
+running over a disaggregated cluster. 
+This involves two steps: (i) collecting traces of memory, disk and network 
+access (on an existing server cluster) and, (ii) mapping these accesses to network flows (on a model of a disaggregated cluster).
+
+\paragraphb{Traces}
+We use the same experimental setup as in \S\ref{ssec:rmethod}, including the applications, datasets, and EC2 cluster (with VPC enabled). 
+We collect traces of: 
+\vspace{-0.5em}
+\begin{itemize}[leftmargin=*]
+\itemsep0em
+\item \emph{`remote' memory accesses:} using our instrumentation that intercepts 
+page faults as described in \S\ref{ssec:rmethod}; we record the 
+request size in number of pages and the timestamp for each request.
+%into the server's portion of the main memory that we've identified as ``remote memory''
+\item \emph{network accesses:} we capture inter-machine traffic using {\tt tcpdump}~\cite{tcpdump}. {\tt tcpdump} gives us a packet-level log containing the five tuple for each packet. We treat all packets with the same five-tuple (protocol ID, source and destination address/port) as a single flow{\footnote{Applications choose one of the source ports randomly to establish a connection to the destination for each request. Given the large number of available ports, we assume that multiple connections between a pair of servers do not share the same port.  
+One exception is memcached which uses long-lived connections (all packets have the same five-tuple). In this case, we simply assumed each key-value pair lookup to be one flow.}}.
+\item \emph{disk accesses:} we record application-level disk accesses using the {\tt blktrace} utility, which records a collection of (start\_block\_address, \#blocks, timestamp) tuples for each disk access request. Note that a single application-level file request may generate multiple such tuples since the data is not necessarily stored on consecutive disk blocks. Since {\tt blktrace} records accesses at the granularity of disk blocks, we must identify which tuples correspond to the same application-level request. This could be done by instrumenting the application; however, this is not only complex but also would potentially interfere with the application's performance. Instead, we simply assume that all tuples with timestamps within $50\mu$s correspond to the same application-level request. 
+%The only difference is that we enabled the Virtual Private Network (VPC) in our cluster, ensuring no interference with other Amazon EC2 machines. 
+\end{itemize} 
+
+\cut{
 
 \paragraphb{Capturing traffic in server-centric datacenters}
-To characterize the network traffic in existing datacenters, we run the applications atop our EC2 cluster and capture the inter-machine traffic using {\tt tcpdump}~\cite{tcpdump}. {\tt tcpdump} gives us a packet-level log containing the five tuple for each packet. All packets with the same five-tuple constitute a single flow{\footnote{Applications choose one of the source ports randomly to establish a connection to the destination for each request. Given the large number of available ports, we assume that multiple connections between a pair of servers do not share the same port. However, memcached uses long-lived connections (all packets have the same five-tuple). In this case, we simply assumed each key-value pair lookup to be one flow.}}.
 
 \paragraphb{Capturing memory and disk accesses}
-At each individual server, we capture two types of traffic. First, application-level memory accesses using SIT (\S\ref{ssec:rmethod}) --- the request size in number of pages and the timestamp for each request into the server's main memory identified as ``remote memory'' ($75\%$ of main memory at the server since we use CPU local cache size to be $25\%$ (\S\ref{sec:requirements})). Second, application-level disk accesses using the {\tt blktrace} utility, which records a collection of (start\_block\_address, \#blocks, timestamp) tuples for each disk access request{\footnote{Note that a single application-level file request may generate multiple such records since the data residing on disk is not necessarily on consecutive disk blocks (due to disk fragmentation).}}. Since {\tt blktrace} trace is at the disk block granularity, identifying tuples corresponding to the same application-level request requires adding instrumentation to the application (which will impact traffic characteristics, \eg, flow arrival times). We instead assume that all tuples with timestamps within $50\mu$s constitute to the same application-level request. 
+At each individual server, we capture two types of traffic. First, application-level memory accesses using SIT (\S\ref{ssec:rmethod}) --- the request % ($75\%$ of main memory at the server since we use CPU local cache size to be $25\%$ (\S\ref{sec:requirements})). 
 
+}
 %
 \begin{figure*}
   \centering
@@ -45,19 +77,50 @@ At each individual server, we capture two types of traffic. First, application-l
 \end{figure*}
 %
 
-The memory and disk requests using SIT and {\tt blktrace} are captured locally at each individual server. Some of these requests correspond to requests originating at remote CPUs (\eg, shuffle traffic). To correctly attribute requests to CPU that originates the request, we perform a timestamp-based matching between requests captured at each individual server, and inter-machine NIC traffic from {\tt tcpdump}. If a locally captured memory or disk access request matches to a NIC flow, it is assumed to be part of a remote read and is correctly attributed to the source of the NIC flow (more than $85\%$, on an average, were correctly attributed in our evaluation). Otherwise, the request is assumed to have been generated locally. 
+\paragraphb{Mapping accesses to network flows in \dis}
+Mapping the above traces to network traffic that would have resulted 
+in a disaggregated cluster again involves two steps. First, we must 
+define the resource blades that form our endpoints in the disaggregated cluster (i.e., map the resources in our server-based cluster into standalone blades in a disaggregated cluster) and then map the above traces to flows between these endpoints. 
+We assume one server maps to one compute blade and one memory blade but consolidate disk resources from different servers into a smaller number of disk blades so as to compensate for the relatively low throughput to disk (doing otherwise would only decrease our network load); specifically, we 
+assume that one server's disk resources map to $60\%$ of a standalone 
+disk blade.\footnote{We arrived at this number \sr{how??}.}
 
+Having defined our resource blades as above, we now define how traffic 
+flows between them. 
+All memory and disk accesses captured above are associated with a specific address in the corresponding CPU's global virtual address space. We assume this address space is uniformly partitioned across all memory and disk blades reflecting our assumption of distributed data placement (\S\ref{ssec:system}).  
+%This address space is partitioned across five memory blades and three disk blades{\footnote{Some of the disk space was not utilized in our cluster.}} in \dis using range partitioning. 
+%distributes data across memory or disk access in our EC2 cluster may now be mapped along multiple blades.
+
+One subtlety remains. Consider the disk accesses at a server A in the original cluster: one might view all these disk accesses as corresponding to a flow between the compute blade corresponding A and the disk blade corresponding to A but in reality some of these disk accesses may have been issued by A's CPU in response to a request from a remote server B (\eg, due to a shuffle request). 
+In the disaggregated cluster, this access should be treated as a network flow between \emph{B}'s compute blade and A's disk blade (i.e., the 
+compute blade obtained by disaggregating server B and the disk blade that corresponds to disaggregating A).
+
+
+%The memory and disk requests using SIT and {\tt blktrace} are captured locally at each individual server. Some of these requests correspond to requests originating at remote CPUs (\eg, shuffle traffic). 
+
+To correctly attribute accesses to the CPU that originates the request, we match network and disk traces across the cluster -- e.g., matching the network traffic between B and A to the disk traffic at A -- using both the timestamps and volume of data transferred. 
+%perform a timestamp-based matching between requests captured at each individual server, and inter-machine NIC traffic from {\tt tcpdump}. 
+If a locally captured memory or disk access request matches a local flow in our {\tt tcpdump} traces, then it is assumed to be part of a remote read and is attributed to the remote endpoint of the network flow.
+%(more than $85\%$, on an average, were correctly attributed in our evaluation). 
+Otherwise, the memory/disk access is assumed to have originated from the local CPU. 
+%generated locally. 
+
+\cut{
 \paragraphb{Data placement}
-All memory and disk accesses captured above are associated with a specific address in the respective global virtual address space. This address space is partitioned across five memory blades and three disk blades{\footnote{Some of the disk space was not utilized in our cluster.}} in \dis using range partitioning. 
-%for the entire address space nodes for a 5-machine ec2 cluster --- this represents the fact that disk access is slower than memory access, and thus can support more resource per blade without becoming bandwidth constrained.
-In particular, the address space for memory and disk on each individual server is partitioned into five and three parts, respectively, to match the number of resource blades. Each range is then mapped to one of the blades. Note that, as discussed in \S\ref{ssec:system}, this mapping enables distributed data placement since a memory or disk access in our EC2 cluster may now be mapped along multiple blades.
+
+for the entire address space nodes for a 5-machine ec2 cluster --- this represents the fact that disk access is slower than memory access, and thus can support more resource per blade without becoming bandwidth constrained.
+In particular, the address space for memory and disk on each individual server is partitioned into five and three parts, respectively, to match the number of resource blades. Each range is then mapped to one of the blades. 
 
 \paragraphb{Transforming accesses into network flows}
+
 The above methodology provides us the amount of data accessed and the corresponding timestamps for each pair of CPU-memory and CPU-disk blades in \dis (memory-disk blades to not communicate directly). For any pair of resource blades, we transform access requests into network flows by combining requests with timestamps within $50\mu$s into a single flow.  Finally, a read request on disk and memory blades is considered a flow with corresponding blade being the source and CPU being the destination; write requests are considered as flows in the opposite direction.
+}
 
 \subsection{Traffic Characterization} 
 \label{ssec:flc}
 We discuss the traffic characteristics in \dis, and contrast them against the traffic in existing server-centric datacenters.
+
+We note that network designs have long been guided by measurements/models characterizing traffic workloads and hence the characterization we undertake is of value in itself (i.e., beyond  just capturing the performance impact of congestion).
 
 \paragraphb{Flow Sizes and number of flows} 
 Figure~\ref{fig:fsd} and Figure~\ref{fig:fsdp} show the flow size distribution for \dis and for existing datacenters. Note that the flow size distribution for existing datacenters closely resembles the distribution observed in previous studies~\cite{srikanth, theo}. We observe that, in a sharp contrast to current datacenters, the flow sizes in \dis are concentrated in a small range [4KB, 40MB] --- two orders of magnitude smaller for the long flow sizes in current datacenters. Intuitively, two factors contribute to the differences. First, as outlined in \S\ref{ssec:rmethod}, the granularity of remote traffic in \dis is eith a page size ($4$KB) or a disk block size ($4$KB) leading to lack of short flows. Second, distributed data placement in \dis (\S\ref{ssec:rmethod}) distributes long flows along multiple CPU-disk blade pairs, reducing the tail in flow size distribution.
@@ -109,6 +172,7 @@ Also note that there are slightly more traffic volume to the first memory blades
   \label{fig:sd}
 \end{figure}
 %
+\cut{
 \subsection{Implications}
 \label{ssec:knobs}
 \rc{I don't think we'll have results for these, right?}
@@ -117,7 +181,7 @@ We now study how various design parameters in \dis architecture design impact th
 \paragraphb{Impact of disaggregation scale}
 
 \paragraphb{Impact of data placement}
-
+}
 %---------------
 %END OF USEFUL STUFF
 %---------------
