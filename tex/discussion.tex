@@ -11,13 +11,23 @@ One limitation of our results is our application-agnostic measurement approach. 
 Going forward we anticipate work in designing disaggregated datacenters will fall into three categories - low-latency networks, network abstractions, and system architecture. We summarize these areas, discussed earlier in prior work~\cite{hotnets}, below.
 
 \paragraphb{Low-latency networks}
-As demonstrated in \S\ref{sec:requirements} low latency networks will be a critical part of building  disaggregated datacenters on a large scale. Fortunately this is a hot topic in networking~\cite{lowlatency, pfabric} and networks will likely achieve the bounds specific in this paper.
+As demonstrated in \S\ref{sec:requirements} low latency networks will be a critical part of building  disaggregated datacenters on a large scale. Fortunately this is a hot topic in networking~\cite{lowlatency} and networks will likely achieve the bounds specific in this paper.
+We believe reducing network latency can be achieve in the following directions.
+At physical layer, newer hardware technologies, such as cut-through switching, can reduce overhead of packet trasmission in datacenter network. All optimal switches can reduce the network latency by removing queuing delay, which is the most significant contributor to the delay in current datacenter architecture.
+At network layer, using TDMA based network architecture proposed by Vattikonda et al.~\cite{tdma} makes the network latency more deterministic. 
+Orthogonal to that, at transport layer, improved protocol design such as pFabric~\cite{pfabric} and pHost~\cite{phost} can further reduce latency by scheduling flows as quickly as possible. 
+Fourth, at the OS layer, applying techniques such as zero-copy~\cite{netmap} can significantly reduce OS network stack overhead and hence reduces latency.
+Remote Direct Memory Access (RDMA) directly accesses the remote memory by circumventing the operating system of the remote machine.
+At application layer, end-to-end delay can be improved by reducing the distance between the job and data. There is much active research~\cite{endpoint} on data and job placement in map-reduce clusters. Future research could study how to optimally place data when storage resources are disaggregated.
 
 \paragraphb{Network Architecture}
 It is worth noting that disaggregation effectively blurs the lines between what used to be separate intra- and inter-server networks as observed in \S\ref{sec:workloads}. Basic concepts such as variable-sized packets and best-effort service are common in inter-server networks but not so in intra-server links/networks, causing differences in traffic characteristics. Future network architectures should take these considerations into account.
 
 \paragraphb{System Architecture}
 While this paper used a VM abstraction for emulation disaggregated datacenters, it is unclear whether this will remain the right abstraction going forward. For example, a job-centric abstraction in which users specify resource needs rather than provisioning VMs could prove to be a more flexible and natural abstraction to express tasks in the future.
+
+
+
 
 %\begin{itemize}
 %	\item Limitations

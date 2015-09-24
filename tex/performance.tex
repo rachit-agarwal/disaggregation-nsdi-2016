@@ -10,30 +10,30 @@ We explore the sufficiency of existing network-layer solutions for \dis in two s
 %
 \begin{figure*}
   \centering
-    \includegraphics[width = 2in]{img/fig12_slowdownsGraph} 
+    \includegraphics[width = 2in]{img/fig12_dcScale_slowdownsGraph} 
     \subfigure{
-    \includegraphics[width=2in]{img/fig12_dcScale_slowdownsGraph}
+    \includegraphics[width=2in]{img/fig12_dc-scale_slowdowns_small}
     }
     \subfigure{
-    \includegraphics[width=2in]{img/fig12_raScale_slowdownsGraph}
+    \includegraphics[width=2in]{img/fig12_dc-scale_slowdowns_big}
     }
-  \caption{\small{The mean slowdown for pFabric, pHost, fastpass, and TCP for each of the six applications: (left) overall; (center) short flows only; (right) long flows.}}
-  \label{fig:phostp}
+  \caption{\small{The mean slowdown for pFabric, pHost, fastpass, and TCP for each of the five applications at datacenter-scale: (left) overall; (center) short flows only; (right) long flows.}}
+  \label{fig:phostp-ds}
 \end{figure*}
 %
 
 %
 \begin{figure*}
   \centering
-    \includegraphics[width = 2in]{img/fig12_slowdownsGraph} 
+    \includegraphics[width = 2in]{img/fig12_raScale_slowdownsGraph} 
     \subfigure{
-    \includegraphics[width=2in]{img/fig12_dcScale_slowdownsGraph}
+    \includegraphics[width=2in]{img/fig12_rack-scale_slowdowns_small}
     }
     \subfigure{
-    \includegraphics[width=2in]{img/fig12_raScale_slowdownsGraph}
+    \includegraphics[width=2in]{img/fig12_rack-scale_slowdowns_big}
     }
-  \caption{\small{Comparison of network-level performance for rack-scale and datacenter-scale resource disaggregation: (left) overall; (center) short flows only; (right) long flows.}}
-  \label{fig:phostp}
+  \caption{\small{The mean slowdown for pFabric, pHost, fastpass, and TCP for each of the five applications at rack-scale: (left) overall; (center) short flows only; (right) long flows.}}
+  \label{fig:phostp-rs}
 \end{figure*}
 %
 For all the simulations in this section, we use the setup from prior work in datacenter transport simulation~\cite{pfabric, phost}. In particular, we simulate a $144$-node full bisection bandwidth fat-tree topology with $40$Gbps access link capacity, $0.2$us of latency per hop, and $36$KB buffers per port. We evaluate the following four protocols:
@@ -42,14 +42,14 @@ For all the simulations in this section, we use the setup from prior work in dat
 \begin{enumerate}
 \item \paragraphb{pFabric} pFabric~\cite{pfabric} uses priority queues in the network for scheduling and congestion control, prioritizing flows with a smaller remaining flow size. We set pFabric to have an initial congestion window of 12 packets \rc{fix} and a retransmission timeout of $45$us; these parameters were obtained from pFabric's implementation.
 \item \paragraphb{pHost} pHost~\cite{phost} answers the question of how close a protocol can get to pFabric's performance by scheduling only at the end hosts. This allows the use of commodity switches as well as flexibility in policy selection. We set pHost to have an initial congestion window of 12 packets \rc{fix} and a retransmission timeout of $9.5$us; these parameters were obtained from pHost's implementation.
-\item \paragraphb{Fastpass} Fastpass~\cite{fastpass} is a centralized scheduling algorithm in which every packet is scheduled by a global arbiter. We set the Fastpass epoch size to be 8 packets, obtained from the Fastpass paper.
+\item \paragraphb{Fastpass} Fastpass~\cite{fastpass} is a centralized scheduling algorithm in which every packet is scheduled by a global arbiter. We implemented a central scheduler in our simulator to compare the performance of Fastpass with other applications as we lacked access to a real disaggregated datacenter in which to test Fastpass. The implementation of this centralized arbiter is discussed in detail in previous work~\cite{phost}. We set the Fastpass epoch size to be 8 packets, obtained from the Fastpass paper.
 \item \paragraphb{TCP} If you're reading this paper and don't know what TCP is then you should rethink your life. \rc{Write things about TCP here}
 \end{enumerate}
 
 There are multiple challenges in executing the above two steps that we had to resolve.
 
 \paragraphb{Scaling up}
-To represent a $144$-node topology using only 13 nodes of measurement data (5 CPU, 5 memory, 3 disk as discussed in \S\ref{sec:methol}), we collected two CDFs representing the interarrival and flow size distributions for each of the 70 possible source-destination pairs (recall from the discussion in \S\ref{sssec:spatialdist} that although there are 13 nodes, certain source-destination pairs will be quiescent). We then assign each node in the topology a sender profile and 12 other nodes in the destination it will send traffic to. We then generate flows between these chosen source-destination pairs by drawing from the appropriate distribution in our traffic matrix. Overall, this method should approximate network traffic in \dis well enough for our evaluation of transport protocols because it draws from our observed distribution of flows that would appear in \dis.
+To represent a $144$-node topology using only 13 nodes of measurement data (5 CPU, 5 memory, 3 disk as discussed in \S\ref{sec:methol}), we collected two CDFs representing the interarrival and flow size distributions for each of the 70 possible source-destination pairs (recall from the discussion in \S\ref{sssec:spatialdist} that although there are 13 nodes, many source-destination pairs will be quiescent). We then assign each node in the topology a sender profile and 12 other nodes in the destination it will send traffic to. We then generate flows between these chosen source-destination pairs by drawing from the appropriate distribution in our traffic matrix. Overall, this method should approximate network traffic in \dis well enough for our evaluation of transport protocols because it draws from our observed distribution of flows that would appear in \dis.
 %\begin{enumerate}
 %\item our data is for 5 ec2 nodes, but we have a 144-node topology to fill.
 %\item the 5 ec2 nodes map to 5 cpu blades, 5 memory blades, and 3 disk blades
@@ -60,7 +60,18 @@ To represent a $144$-node topology using only 13 nodes of measurement data (5 CP
 %\end{enumerate}
 
 \paragraphb{Level of disaggregation: $3\times$ problem?}
-In a \pdis datacenter network, each node represents a collection of 3 resources --- one unit each of CPU, memory, and disk. However in \dis each resource is moved into a separate network node. Applying this transformation naively, one node in the old center would now be spread across three nodes (one for each resource type). As a result, the datacenter as a whole would contain one-third the overall computing resources post-disaggregation. Therefore, to fairly simulate network performance in \dis while representing an equal amount of compute resources we must scale our load up by a factor of 3. We solve this problem by sampling from the size and interarrival distributions discussed above three times per source-destination pair to simulate the presence of three units of computing resource per node.
+In a \pdis datacenter network, each node represents a collection of 3 resources --- one unit each of CPU, memory, and disk. However in \dis each resource is moved into a separate network node. Applying this transformation naively, one node in the old center would now be spread across three nodes (one for each resource type). As a result, the datacenter as a whole would contain one-third the overall computing resources post-disaggregation. Therefore, to fairly simulate network performance in \dis while representing an equal amount of compute resources we must scale our load up by a factor of 3. We solve this problem by sampling from the size and interarrival distributions discussed above three times per source-destination pair when generating flows in our simulator to represent the presence of three units of computing resource per node.
+
+\paragraphb{Latency Injection for Disk Flows}
+Unfortunately, the \texttt{blktrace} tool we use to gather the disk access trace does not \emph{intercept} disk accesses as SIT does for remote memory accesses. As a result, we were unable to inject latency into disk accesses in our experiments. However, our results remain significant because memory accesses are much more sensitive to latency injection than disk accesses. Accordingly, when injecting latency to determine application-level performance we only draw from the performance distribution of memory flows in our simulator.
+
+%\begin{enumerate}
+%\item blktrace does not intercept, it only logs
+%\item we cannot inject latency into disk access
+%\item this is okay because a. memory is more latency sensitive anyway 
+%\item and b. there are more memory flows than disk flows.
+%\item accordingly we only consider the slowdown distribution of memory flows when injecting.
+%\end{enumerate}
 
 %\begin{enumerate}
 %\item before, one "blade" had 3 resources - cpu, memory, disk
@@ -72,7 +83,10 @@ In a \pdis datacenter network, each node represents a collection of 3 resources 
 
 \subsection{Network-level performance}
 \label{ssec:nlp}
-Figure~\ref{fig:phostp} shows the performance of pFabric, pHost, Fastpass, and TCP as discussed above for the mean slowdown metric, where the flow completion time achieved in simulation for a given flow is normalized by the time it would have taken that flow to complete if it were alone in the network and this number is then averaged across all flows in the simulation. We observe that for latency-sensitive short flows, the mean slowdown is near-optimal for most applications measured. For longer flows, the performance is slightly worse, but still quite good. \rqc{We conclude that ...}
+Figure~\ref{fig:phostp-rs} shows the performance of pFabric, pHost, Fastpass, and TCP as discussed above for the mean slowdown metric, where the flow completion time achieved in simulation for a given flow is normalized by the time it would have taken that flow to complete if it were alone in the network and this number is then averaged across all flows in the simulation. We observe that for latency-sensitive short flows representing memory accesses, the overhead from network performance is minimal. For longer flows, the performance is slightly worse, but still quite good. Note that for the graphlab and memcached applications, even TCP is sufficient for good network performance; this indicates that the \dis workload is manageable.
+
+While Fastpass performs well for long flows, it does not match pFabric, pHost, or TCP in short flow performance for most applications, which is critical in \dis. While Fastpass outperforms pHost, pFabric, and TCP for the wordcount-hadoop application, this is because wordcount-hadoop has a larger share of long flows for which Fastpass achieves good performance. Overall, our results suggest a centralized solution will be insufficient for a disaggregated datacenter due to consistently worse performance for latency-sensitive short flows.
+
 %\begin{enumerate}
 %\item Figure~\ref{fig:phostp} shows network transport performance.
 %\item we use the mean slowdown metric used by pFabric and phost~\cite{pfabric, phost}.
@@ -84,16 +98,19 @@ Figure~\ref{fig:phostp} shows the performance of pFabric, pHost, Fastpass, and T
 
 \subsection{Application-level performance}
 \label{ssec:alp}
-\paragraphb{Latency injection for long flows}
-\rqc{need results from peter}
+Figure~\ref{fig:appfabric} shows the application level slowdown after injecting latency into memory accesses. The application layer effects depend not only on the network performance as discussed in \S\ref{ssec:nlp} above but also the characteristics of the application being evaluated. For example, memcached and terasort observe similar performance degradation despite memcached having better network performance. This is because memcached has more memory accesses than terasort. 
 
-\begin{enumerate}
-\item blktrace does not intercept, it only logs
-\item we cannot inject latency into disk access
-\item this is okay because a. memory is more latency sensitive anyway 
-\item and b. there are more memory flows than disk flows.
-\item accordingly we only consider the slowdown distribution of memory flows when injecting.
-\end{enumerate}
+\subsection{Knobs}
+\label{ssec:ddcArchKnob}
+An interesting question is whether the \emph{scale} of disaggregation matters; that is, should the disaggregated resources comprising a single virtual machine be co-located within single rack? We answer this question by considering two placement schemes in our network-layer evaluation. We find that constraining the scale of disaggregation to within a rack does not have much effect on performance. 
+
+We evaluated this question by considering two options:
+\begin{itemize}
+\item \emph{Datacenter scale}, in which any two nodes in our 144-node topology could be part of the same VM, and
+\item \emph{Rack scale}, in which we enforce the constraint that one VM must be contained within a rack \footnote{Our topology has 16 nodes per rack, so to avoid wasting nodes there are two VMs in our experiment that span multiple racks.}
+\end{itemize}
+
+Surprisingly, as seen in Figures~\ref{fig:phostp-ds} and~\ref{fig:phostp-rs} datacenter-scale disaggregation showed comparable results to rack-scale not only in network performance, but also in application-level performance (Figure~\ref{fig:appfabric}).
 
 %
 \begin{figure}
