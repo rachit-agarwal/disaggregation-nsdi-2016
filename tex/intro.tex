@@ -2,7 +2,7 @@
 \section{Introduction}
 \vspace{-0.05in}
 \label{sec:intro}
-Existing datacenters are based on a server-centric architecture, in which a small amount of the various resources needed for computing tasks (CPU, memory, storage) are tightly integrated within a single server. While server-centric architectures have been the mainstay for decades, recent efforts suggest a paradigm shift towards a {\em disaggregated} datacenter (\dis) that is architected as a pool of decoupled resources. In \dis, each resource type is built as a standalone resource `blade' and all blades are interconnected via a unified network fabric as shown in Figure~\ref{fig:dc}. In such a datacenter, the aggregation of resources needed by a job is then logical (allocated by a software scheduler) rather than physical (dictated by hardware).
+Existing datacenters are based on a server-centric architecture, in which a small amount of the various resources needed for computing tasks (CPU, memory, storage) are tightly integrated within a single server. While server-centric architectures have been the mainstay for decades, recent efforts suggest a forthcoming paradigm shift towards a {\em disaggregated} datacenter (\dis) that is architected as a pool of decoupled resources. In \dis, each resource type is built as a standalone resource `blade' and all blades are interconnected via a unified network fabric as shown in Figure~\ref{fig:dc}. In such a datacenter, the aggregation of resources needed by a job is then logical (allocated by a software scheduler) rather than physical (dictated by hardware).
 
 Multiple small-scale prototypes of disaggregated hardware exist already --- Intel RSA~\cite{rsa}, HP ``the machine''~\cite{hptm}, Facebook's disaggregated rack~\cite{fdr}, and SeaMicro~\cite{seamicro}, as well as research prototypes like Firebox~\cite{firebox}, soNUMA~\cite{sonuma}, and memory blades~\cite{ddcHwDesign1}.
 
@@ -28,7 +28,7 @@ easier to build and evolve.
 For example, an ongoing challenge for hardware architects is that technologies for CPUs, memory, storage, etc. have very different cost, performance, and power scaling trends and this constrains their integration; e.g., architects have warned of an impending `memory capacity wall' making the co-location of compute and memory in a single server unsustainable~\cite{ddcHwDesign1}. 
 Similarly, as new needs or technologies arise~\cite{memristors,nvram,reg-ex-hardware,gpus}, having standalone per-resource blades avoids the burdensome process of redoing the process of integration and motherboard design.
 %, and server factor form planning. 
-Disaggregation offers similar benefits to operators, as it enables finer-grained control over how they  provision, upgrade, and schedule individual resources.
+Disaggregation also offers significant benefits to operators, as it enables finer-grained control over how they  provision, upgrade, and schedule individual resources.
 %Finally, resource disaggregation allows overcoming the technology barriers (imbalance between memory and CPU capacity, power dissipation issues, etc), potentially enabling new technological advances. 
 
 While disaggregation offers many benefits, it introduces new challenges for the underlying network fabric. Today's servers offer high bandwidth and low latency communication between the resources within the server (see Table~\ref{tab:tech}). However, with disaggregation, some of the inter-resource communication that used to be contained within a server must now traverse the external network fabric. This not only increases the load on the network but makes low latency communication on the fabric critical. The network will thus be a key enabling or limiting factor in realizing resource disaggregation. 
@@ -41,7 +41,7 @@ This paper takes a first step towards understanding what network support is requ
 \vspace{-0.5em}
 \begin{itemize}[leftmargin=*]
 	\itemsep0em
-	\item What network latency and bandwidth are required to avoid degrading application-level performance relative to server-centric architectures? 
+	\item What network latency and bandwidth are required to avoid significantly degrading application-level performance relative to server-centric architectures? 
 	\item How (and why) does disaggregation change network traffic characteristics such as flow size distributions, communication patterns, traffic volumes, burstiness, and so forth?
     \item Can existing transport protocols meet the above requirements? 
 \end{itemize}

@@ -31,6 +31,8 @@ Grappa~\cite{grappa} is a software distributed memory system for data-intensive 
 These systems demonstrate the benefits of memory sharing and show that RDMA could improve the efficiency of memory sharing.
 
 \paragraphb{Disaggregated Datacenter Network}
+
+
 R2C2~\cite{r2c2} designs a torus like topology to increase the path density in its rack scale network.
 By leveraging the relatively small scale of the network, R2C2 uses a broadcasting protocol to ensure all nodes in the network are aware of all the flows in the network.
 We believe broadcasting is cost prohibitive in datacenter scale distribution, and hence R2C2 is only suitable for rack scale disaggregation.
