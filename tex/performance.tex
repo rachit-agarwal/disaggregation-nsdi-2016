@@ -109,7 +109,7 @@ Interestingly, TCP achieves better performance than Fastpass for many datapoints
 
 \subsection{Application-level performance}
 \label{ssec:alp}
-Figure~\ref{fig:appfabric} shows the application level slowdown after injecting latency into memory accesses when drawing network latency from the pFabric slowdown distribution in~\ref{seec:nlp}. Overall, the application layer slowdown due to network-layer effects is limited to a 9\% percent slowdown compared to an infinitely fast network. 
+Figure~\ref{fig:appfabric} shows the application level slowdown after injecting latency into memory accesses when drawing network latency from the pFabric slowdown distribution in~\ref{ssec:nlp}. Overall, the average application layer slowdown due to network-layer effects is limited to a 6.2\% percent slowdown compared to an infinitely fast network. 
 
 \paragraphb{Level of Disaggregation} 
 Surprisingly, disaggregating resources at the datacenter scale did not incur much application layer penalty over rack scale disaggregation. The case with the greatest difference was wordcount, where datacenter- and rack-scale disaggregation incurred 9.1\% and 5\% application layer slowdown, respectively. This naturally follows from the results in Figures~\ref{fig:phostp-ds} and~\ref{fig:phostp-rs}; since the network layer performance is roughly equal across the two schemes, the application layer performance is as well. \rc{that last sentence sucks}
@@ -124,8 +124,8 @@ The application layer effects depend not only on the network performance as disc
 %
 \begin{figure}
   \centering
-    \includegraphics[width = 2.5in]{img/slowdown.eps} 
-  \caption{\small{\rqc{Application layer slowdown for each of the six applications.}}}
+    \includegraphics[width = 3in]{img/slowdown.eps} 
+  \caption{\small{Application layer slowdown for each of the four applications at rack-scale and datacenter scale. The average application layer slowdown due to network effects is at most 6.2\%.}}
   \label{fig:appfabric}
 \end{figure}
 %
