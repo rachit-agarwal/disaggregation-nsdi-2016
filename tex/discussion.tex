@@ -2,7 +2,7 @@
 \label{sec:discussion}
 
 \subsection{Related Work}
-\paragraphb{Research prototypes} As mentioned earlier, there is growing interest in rack scale disaggregation in both industry and research.
+\paragraphb{Research prototypes} Rack-scale disaggregation has been attracting a lot of attention, both in industry and in academia. There is a growing interest in rack scale disaggregation in both industry and research.
 Early industry rack scale prototypes include AMD SeaMicro~\cite{seamicro}, Intel RSA~\cite{rsa}, HP's The Machine~\cite{hptm}, and Facebook's Disaggregated Rack~\cite{fdr}.
 We describe HP's The Machine as an example. 
 The Machine uses optical network to interconnect CPUs to 4 massive pools of memory, each with 1TB RAM.
@@ -25,22 +25,23 @@ However, these interconnects designed for their specific context and do not disc
 
 
 \paragraphb{Distributed Shared Memory (DSM)}
-RDMA allows remote memory access without OS involvement and hence enables efficient memory sharing between servers in datacenter.
-FaRM~\cite{farm} does lock-free reads over RDMA and enables single machine transaction using function shipping. 
-Grappa~\cite{grappa} is a software distributed memory system for data-intensive applications.
-These systems demonstrate the benefits of memory sharing and show that RDMA could improve the efficiency of memory sharing.
+There has been a lot of recent activity in realizing distributed shared memory environments for big data analytics. A case in point is FaRM~\cite{farm}, that provides applications with an abstraction of distributed shared memory. Besides, systems like MICA~\cite{mica}, Herd~\cite{herd}, Grappa~\cite{grappa} employ RDMA to enable fast remote reads in distributed settings. These systems not only demonstrate the benefits of remote memory accesses, but also show that RDMA and new technologies may enable the low latency requirements outlined in our study.
+
+% RDMA allows remote memory access without OS involvement and hence enables efficient memory sharing between servers in datacenter.
+% FaRM~\cite{farm} does lock-free reads over RDMA and enables single machine transaction using function shipping. 
+% Grappa~\cite{grappa} is a software distributed memory system for data-intensive applications.
+% These systems demonstrate the benefits of memory sharing and show that RDMA could improve the efficiency of memory sharing.
 
 \paragraphb{Disaggregated Datacenter Network}
+R2C2~\cite{r2c2} explores the problem of designing a network stack for disaggregated datacenters. They propose an interconnect topology for disaggregation at the rack-scale, as well as explored the questions of designing efficient routing and congestion control mechanisms in the context of rack-scale disaggregation.
 
+The focus of our work is orthogonal to that of R2C2. The focus of our study is orthogonal to that of R2C2. Rather than designing disaggregated datacenter networks, our study aims to build an understanding of network requirements, traffic characteristics, and sufficiency of existing network designs in the context of resource disaggregation. Our study may help building an understanding of these issues, and guide the design of network topologies and protocols for resource disaggregation. 
 
-R2C2~\cite{r2c2} designs a torus like topology to increase the path density in its rack scale network.
-By leveraging the relatively small scale of the network, R2C2 uses a broadcasting protocol to ensure all nodes in the network are aware of all the flows in the network.
-We believe broadcasting is cost prohibitive in datacenter scale distribution, and hence R2C2 is only suitable for rack scale disaggregation.
+% R2C2~\cite{r2c2} designs a torus like topology to increase the path density in its rack scale network.
+% By leveraging the relatively small scale of the network, R2C2 uses a broadcasting protocol to ensure all nodes in the network are aware of all the flows in the network.
+% We believe broadcasting is cost prohibitive in datacenter scale distribution, and hence R2C2 is only suitable for rack scale disaggregation.
 
-In the prior work ~\cite{hotnets}, we studied the impact of remote memory access latency to application performance in a single machine.
-We extend our study by running distributed applications on 5 EC2 nodes.
-Our result shows that low latency network would be the enabling factor of disaggregation, and the application level performance is not very sensitive to the scale of disaggregation.
-
+In our own prior work~\cite{hotnets}, we focused on understanding the impact of remote memory access latency to application-level performance on a single machine. This work extends our previous work along several dimensions. First, our evaluation on understanding the impact of remote data accesses runs in the wild, capturing realistic scenarios which may otherwise be hidden on a single-machine setting. Our work also extends~\cite{hotnets} by characterizing the network traffic in disaggregated datacenters, and exploring how the new traffic patterns may impact the application-level performance using existing network designs. 
 
 
 
