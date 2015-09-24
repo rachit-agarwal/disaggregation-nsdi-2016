@@ -40,10 +40,13 @@ For all the simulations in this section, we use the setup from prior work in dat
 
 
 \begin{enumerate}
-\item \paragraphb{pFabric} pFabric~\cite{pfabric} uses priority queues in the network for scheduling and congestion control, prioritizing flows with a smaller remaining flow size. We set pFabric to have an initial congestion window of 12 packets \rc{fix} and a retransmission timeout of $45$us; these parameters were obtained from pFabric's implementation.
-\item \paragraphb{pHost} pHost~\cite{phost} answers the question of how close a protocol can get to pFabric's performance by scheduling only at the end hosts. This allows the use of commodity switches as well as flexibility in policy selection. We set pHost to have an initial congestion window of 12 packets \rc{fix} and a retransmission timeout of $9.5$us; these parameters were obtained from pHost's implementation.
-\item \paragraphb{Fastpass} Fastpass~\cite{fastpass} is a centralized scheduling algorithm in which every packet is scheduled by a global arbiter. We implemented a central scheduler in our simulator to compare the performance of Fastpass with other applications as we lacked access to a real disaggregated datacenter in which to test Fastpass. The implementation of this centralized arbiter is discussed in detail in previous work~\cite{phost}. We set the Fastpass epoch size to be 8 packets, obtained from the Fastpass paper.
-\item \paragraphb{TCP} If you're reading this paper and don't know what TCP is then you should rethink your life. \rc{Write things about TCP here}
+\item \paragraphb{pFabric} pFabric~\cite{pfabric} uses priority queues in the network for scheduling and congestion control, prioritizing flows with a smaller remaining flow size. We set pFabric to have an initial congestion window of 12 packets \rc{fix} and a retransmission timeout of $45$us; we tuned these parameters experimentally.
+%
+\item \paragraphb{pHost} pHost~\cite{phost} answers the question of how close a protocol can get to pFabric's performance by scheduling only at the end hosts. This allows the use of commodity switches as well as flexibility in policy selection. We set pHost to have a free token limit of 8 packets and a retransmission timeout of $9.5$us; these parameters were obtained from pHost's implementation.
+%
+\item \paragraphb{Fastpass} Fastpass~\cite{fastpass} is a centralized scheduling algorithm in which every packet is scheduled by a global arbiter. We implemented a optimistic central scheduler in our simulator to compare the performance of Fastpass with other applications as we lacked access to a real disaggregated datacenter in which to test Fastpass. Our implementation assumes that the arbiter can process an unlimited number of flows infinitely fast, and only considers the latency and bandwidth penalties of central scheduling. The implementation of this centralized arbiter is discussed in detail in previous work~\cite{phost}. We set the Fastpass epoch size to be 8 packets, obtained from the Fastpass paper.
+%
+\item \paragraphb{TCP} We implemented TCP without the three-way handshake as a modest performance improvement. We used a retransmission timeout value of $45$us, which we tuned experimentally.
 \end{enumerate}
 
 There are multiple challenges in executing the above two steps that we had to resolve.

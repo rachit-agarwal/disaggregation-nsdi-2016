@@ -13,6 +13,7 @@ Going forward we anticipate work in designing disaggregated datacenters will fal
 \paragraphb{Low-latency networks}
 As demonstrated in \S\ref{sec:requirements} low latency networks will be a critical part of building  disaggregated datacenters on a large scale. Fortunately this is a hot topic in networking~\cite{lowlatency} and networks will likely achieve the bounds specific in this paper.
 We believe reducing network latency can be achieve in the following directions.
+
 At physical layer, newer hardware technologies, such as cut-through switching, can reduce overhead of packet trasmission in datacenter network. All optimal switches can reduce the network latency by removing queuing delay, which is the most significant contributor to the delay in current datacenter architecture.
 At network layer, using TDMA based network architecture proposed by Vattikonda et al.~\cite{tdma} makes the network latency more deterministic. 
 Orthogonal to that, at transport layer, improved protocol design such as pFabric~\cite{pfabric} and pHost~\cite{phost} can further reduce latency by scheduling flows as quickly as possible. 
@@ -21,7 +22,24 @@ Remote Direct Memory Access (RDMA) directly accesses the remote memory by circum
 At application layer, end-to-end delay can be improved by reducing the distance between the job and data. There is much active research~\cite{endpoint} on data and job placement in map-reduce clusters. Future research could study how to optimally place data when storage resources are disaggregated.
 
 \paragraphb{Network Architecture}
-It is worth noting that disaggregation effectively blurs the lines between what used to be separate intra- and inter-server networks as observed in \S\ref{sec:workloads}. Basic concepts such as variable-sized packets and best-effort service are common in inter-server networks but not so in intra-server links/networks, causing differences in traffic characteristics. Future network architectures should take these considerations into account.
+It is worth noting that disaggregation effectively blurs the lines between what used to be separate intra- and inter-server networks as observed in \S\ref{sec:workloads}. 
+Basic concepts such as variable-sized packets and best-effort service are common in inter-server networks but not so in intra-server links/networks, causing differences in traffic characteristics. 
+We believe it worth exploring the following aspects of the network architecture.
+
+The first question we may ask is whether packet still remains as the right abstraction for disaggregated datacenters. 
+We found that most of the intra- and inter-server networks use packets swtiched network, so we believe packets should still be the correct abstraction. 
+The open questions are whether packet size should be fixed for disaggregated datacenters, and what should be the size of packets. 
+While using larger MTUs amortizes packet header processing overhead, and improves the network throughput, it increases the network latency for small message passing workload.
+
+A second question is how should reliability being guaranteed. 
+While it is clear that each resource endpoint need an end-to-end reliable transfer abstraction, it is unclear where this functionality should be placed.
+Inter-server link technologies such as Infini-Band guarantees reliableility at each link, but Ethernet use end-to-end retransmission for reliability. 
+
+The last question is related to bandwidth reservation. In Intra-server network, bandwidth is usually reserved for each link (CPU-Memory, CPU-NIC). 
+It would be interesting to explore whether using statistical multiplexing is sufficient after disaggregation these compoenents.
+
+
+
 
 \paragraphb{System Architecture}
 While this paper used a VM abstraction for emulation disaggregated datacenters, it is unclear whether this will remain the right abstraction going forward. For example, a job-centric abstraction in which users specify resource needs rather than provisioning VMs could prove to be a more flexible and natural abstraction to express tasks in the future.
