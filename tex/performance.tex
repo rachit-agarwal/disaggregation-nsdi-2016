@@ -164,7 +164,7 @@ In this section, we use the flow completion times obtained from the above simula
 methodology from \S\ref{sec:requirements}.
 Figure~\ref{fig:appfabric} shows the degradation in application level performance when injecting remote memory access times drawn from these pFabric flow completion time distribution in~\ref{ssec:nlp}. Overall, the average application layer slowdown due to network-layer effects is limited to a 6.2\% percent slowdown compared to an infinitely fast network. 
 
-We repeat this with the FCTs from our rack-scale simulations. We see  and find show did not incur much application layer penalty over rack scale disaggregation. The case with the greatest difference was wordcount, where datacenter- and rack-scale disaggregation incurred 6.2\% and 3.9\% application layer slowdown, respectively. This naturally follows from the results in Figures~\ref{fig:phostp-ds} and; since the network layer performance is roughly equal across the two schemes, the application layer performance is as well. \rc{that last sentence sucks}
+We repeat this with the FCTs from our rack-scale simulations. We see that the degradation with datacenter-wide disaggregation is not significantly different from that with rack scale disaggregation. The case with the greatest difference was wordcount, where datacenter- and rack-scale disaggregation incurred 6.2\% and 3.9\% application layer slowdown, respectively. This naturally follows from the results in Figures~\ref{fig:phostp-ds} and; since the network layer performance is roughly equal across the two schemes, the application layer performance is as well. \rc{that last sentence sucks}
 %graphlab: dcscale 4.9 rscale 3.4
 
 
